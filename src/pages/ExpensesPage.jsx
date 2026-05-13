@@ -305,7 +305,7 @@ export default function ExpensesPage() {
         <div>
           <h1 className="text-2xl font-bold">Expenses</h1>
           <p className="text-slate-500 text-sm">
-            {total} records • Rs {Number(totalAmount || 0).toLocaleString('en-PK')}
+            {total} records • SAR {Number(totalAmount || 0).toLocaleString('en-SA')}
           </p>
         </div>
 
@@ -409,11 +409,11 @@ export default function ExpensesPage() {
                   <td>{e.category}</td>
 
                   <td className="text-red-500">
-                    Rs {Number(e.amount).toLocaleString('en-PK')}
+                    SAR {Number(e.amount).toLocaleString('en-SA')}
                   </td>
 
                   <td>
-                    {new Date(e.date).toLocaleDateString('en-PK')}
+                    {new Date(e.date).toLocaleDateString('en-SA')}
                   </td>
 
                   <td className="flex gap-2">

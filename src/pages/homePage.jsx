@@ -29,7 +29,7 @@ export default function Homepage() {
         },
         {
             title: "Revenue",
-            value: `Rs ${stats.revenue}`,
+            value: `SAR ${stats.revenue}`,
             icon: <FiDollarSign className="text-green-500" />,
         },
         {
@@ -39,7 +39,7 @@ export default function Homepage() {
         },
         {
             title: "Expenses",
-            value: `Rs ${stats.expenses}`,
+            value: `SAR ${stats.expenses}`,
             icon: <FiTrendingUp className="text-red-500" />,
         },
     ];

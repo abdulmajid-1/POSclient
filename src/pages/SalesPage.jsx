@@ -6,7 +6,7 @@ import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
 
 
-const formatPKR = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK')}`;
+const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
 function SaleDetailModal({ saleId, onClose }) {
   const [sale, setSale] = useState(null);
@@ -181,7 +181,7 @@ function SaleDetailModal({ saleId, onClose }) {
                     <td className="p-2">{item.productName}</td>
 
                     <td className="p-2 text-center">
-                      {formatPKR(item.unitPrice)}
+                      {formatSAR(item.unitPrice)}
                     </td>
 
                     <td className="p-2 text-center">
@@ -189,7 +189,7 @@ function SaleDetailModal({ saleId, onClose }) {
                     </td>
 
                     <td className="p-2 text-center">
-                      {formatPKR(item.totalPrice)}
+                      {formatSAR(item.totalPrice)}
                     </td>
 
                     <td className="p-2 text-center">
@@ -197,11 +197,11 @@ function SaleDetailModal({ saleId, onClose }) {
                     </td>
 
                     <td className="p-2 text-center">
-                      {formatPKR(sale.tax || 0)}
+                      {formatSAR(sale.tax || 0)}
                     </td>
 
                     <td className="p-2 text-center font-semibold">
-                      {formatPKR(item.totalPrice + (sale.tax || 0))}
+                      {formatSAR(item.totalPrice + (sale.tax || 0))}
                     </td>
 
                   </tr>
@@ -217,25 +217,25 @@ function SaleDetailModal({ saleId, onClose }) {
 
                 <div className="flex justify-between">
                   <span>Subtotal / المجموع</span>
-                  <span>{formatPKR(sale.subtotal)}</span>
+                  <span>{formatSAR(sale.subtotal)}</span>
                 </div>
 
                 {sale.discount > 0 && (
                   <div className="flex justify-between text-red-500">
                     <span>Discount / الخصم</span>
-                    <span>-{formatPKR(sale.discount)}</span>
+                    <span>-{formatSAR(sale.discount)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between">
                   <span>Tax / الضريبة</span>
-                  <span>{formatPKR(sale.tax)}</span>
+                  <span>{formatSAR(sale.tax)}</span>
                 </div>
 
                 <div className="flex justify-between font-bold border-t pt-2">
                   <span>Total / الإجمالي</span>
                   <span className="text-primary-600">
-                    {formatPKR(sale.total)}
+                    {formatSAR(sale.total)}
                   </span>
                 </div>
 
@@ -323,11 +323,11 @@ export default function SalesPage() {
                     <td><span className="badge-blue font-mono">{s.invoiceNumber}</span></td>
                     <td className="font-medium text-slate-700">{s.customer?.name}</td>
                     <td className="text-slate-500">{s.items[0].quantity} items</td>
-                    <td>{formatPKR(s.subtotal)}</td>
-                    <td className="text-red-500">{s.discount > 0 ? `- ${formatPKR(s.discount)}` : '—'}</td>
-                    <td className="font-semibold text-emerald-600">{formatPKR(s.total)}</td>
+                    <td>{formatSAR(s.subtotal)}</td>
+                    <td className="text-red-500">{s.discount > 0 ? `- ${formatSAR(s.discount)}` : '—'}</td>
+                    <td className="font-semibold text-emerald-600">{formatSAR(s.total)}</td>
                     <td className="capitalize"><span className="badge-gray">{s.paymentMethod}</span></td>
-                    <td className="text-slate-400 text-xs">{new Date(s.createdAt).toLocaleDateString('en-PK')}</td>
+                    <td className="text-slate-400 text-xs">{new Date(s.createdAt).toLocaleDateString('en-SA')}</td>
                     <td><span className={`badge-${s.status === 'completed' ? 'green' : 'red'}`}>{s.status}</span></td>
                     <td>
                       <button onClick={() => setSelectedSaleId(s._id)} className="p-1.5 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors text-slate-400">

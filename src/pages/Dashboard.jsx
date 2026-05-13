@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, L
 import { MdShoppingCart, MdAttachMoney, MdInventory2, MdMoneyOff, MdKeyboardReturn, MdWarning, MdTrendingUp, MdTrendingDown } from 'react-icons/md';
 import toast from 'react-hot-toast';
 
-const formatPKR = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK')}`;
+const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
 function StatCard({ title, value, icon: Icon, color, sub }) {
   return (
@@ -59,11 +59,11 @@ export default function Dashboard() {
 
   const cards = [
     { title: "Today's Sales", value: s.todaySales?.count || 0, icon: MdShoppingCart, color: 'bg-primary-600', sub: `Total: ${s.totalSales} all time` },
-    { title: "Today's Revenue", value: formatPKR(s.todaySales?.total), icon: MdAttachMoney, color: 'bg-emerald-500', sub: `Monthly: ${formatPKR(s.monthSales?.total)}` },
+    { title: "Today's Revenue", value: formatSAR(s.todaySales?.total), icon: MdAttachMoney, color: 'bg-emerald-500', sub: `Monthly: ${formatSAR(s.monthSales?.total)}` },
     { title: 'Total Products', value: s.productCount || 0, icon: MdInventory2, color: 'bg-violet-500', sub: `${s.lowStockCount || 0} low stock` },
-    { title: 'Total Expenses', value: formatPKR(s.totalExpenses), icon: MdMoneyOff, color: 'bg-amber-500', sub: `Monthly: ${formatPKR(s.monthExpenses)}` },
-    { title: 'Net Profit', value: formatPKR(s.totalProfit), icon: MdTrendingUp, color: s.totalProfit >= 0 ? 'bg-teal-500' : 'bg-red-500', sub: 'Revenue - Expenses - Returns' },
-    { title: 'Total Returns', value: s.totalReturns || 0, icon: MdKeyboardReturn, color: 'bg-rose-500', sub: formatPKR(s.totalReturnAmount) },
+    { title: 'Total Expenses', value: formatSAR(s.totalExpenses), icon: MdMoneyOff, color: 'bg-amber-500', sub: `Monthly: ${formatSAR(s.monthExpenses)}` },
+    { title: 'Net Profit', value: formatSAR(s.totalProfit), icon: MdTrendingUp, color: s.totalProfit >= 0 ? 'bg-teal-500' : 'bg-red-500', sub: 'Revenue - Expenses - Returns' },
+    { title: 'Total Returns', value: s.totalReturns || 0, icon: MdKeyboardReturn, color: 'bg-rose-500', sub: formatSAR(s.totalReturnAmount) },
   ];
 
   return (
@@ -89,7 +89,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
               <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <Tooltip formatter={(v) => [`Rs ${v?.toLocaleString()}`, 'Revenue']} />
+              <Tooltip formatter={(v) => [`SAR ${v?.toLocaleString()}`, 'Revenue']} />
               <Bar dataKey="revenue" fill="#2563eb" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -103,7 +103,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} />
               <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <Tooltip formatter={(v) => [`Rs ${v?.toLocaleString()}`, 'Revenue']} />
+              <Tooltip formatter={(v) => [`SAR ${v?.toLocaleString()}`, 'Revenue']} />
               <Line type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
@@ -149,9 +149,9 @@ export default function Dashboard() {
                 <div key={sale._id} className="flex items-center justify-between py-2 px-3 hover:bg-slate-50 rounded-lg transition-colors">
                   <div>
                     <p className="text-sm font-medium text-slate-700">{sale.invoiceNumber}</p>
-                    <p className="text-xs text-slate-400">{sale.customer?.name} • {new Date(sale.createdAt).toLocaleString('en-PK', { dateStyle: 'short', timeStyle: 'short' })}</p>
+                    <p className="text-xs text-slate-400">{sale.customer?.name} • {new Date(sale.createdAt).toLocaleString('en-SA', { dateStyle: 'short', timeStyle: 'short' })}</p>
                   </div>
-                  <span className="text-sm font-semibold text-emerald-600">{formatPKR(sale.total)}</span>
+                  <span className="text-sm font-semibold text-emerald-600">{formatSAR(sale.total)}</span>
                 </div>
               ))}
             </div>

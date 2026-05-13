@@ -152,8 +152,8 @@ function ProductModal({ product, onClose, onSaved }) {
 
           {/* PRICES */}
           <div className="grid grid-cols-2 gap-4">
-            {field('Purchase Price (Rs)', 'purchasePrice', 'number', true)}
-            {field('Sale Price (Rs)', 'salePrice', 'number', true)}
+            {field('Purchase Price (SAR)', 'purchasePrice', 'number', true)}
+            {field('Sale Price (SAR)', 'salePrice', 'number', true)}
           </div>
 
           {/* QUANTITY */}
@@ -392,10 +392,10 @@ export default function InventoryPage() {
                       <span className="badge-gray">{p.category?.name}</span>
                     </td>
 
-                    <td>Rs {Number(p.purchasePrice).toLocaleString()}</td>
+                    <td>SAR {Number(p.purchasePrice).toLocaleString()}</td>
 
                     <td className="font-semibold text-emerald-600">
-                      Rs {Number(p.salePrice).toLocaleString()}
+                      SAR {Number(p.salePrice).toLocaleString()}
                     </td>
 
                     <td>

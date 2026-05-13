@@ -93,7 +93,7 @@ function ReturnReportModal({ data, onClose }) {
                 </span>{' '}
                 {new Date(
                   data.createdAt
-                ).toLocaleString('en-PK')}
+                ).toLocaleString('en-SA')}
               </p>
 
               <p>
@@ -158,17 +158,17 @@ function ReturnReportModal({ data, onClose }) {
                     </td>
 
                     <td className="p-3 border-b">
-                      Rs{' '}
+                      SAR{' '}
                       {Number(
                         item.unitPrice
-                      ).toLocaleString('en-PK')}
+                      ).toLocaleString('en-SA')}
                     </td>
 
                     <td className="p-3 border-b font-semibold text-red-500">
-                      Rs{' '}
+                      SAR{' '}
                       {Number(
                         item.totalRefund
-                      ).toLocaleString('en-PK')}
+                      ).toLocaleString('en-SA')}
                     </td>
 
                   </tr>
@@ -186,10 +186,10 @@ function ReturnReportModal({ data, onClose }) {
             <div className="text-right">
 
               <p className="text-lg font-bold text-red-500">
-                Total Refund: Rs{' '}
+                Total Refund: SAR{' '}
                 {Number(
                   data.totalRefund
-                ).toLocaleString('en-PK')}
+                ).toLocaleString('en-SA')}
               </p>
 
             </div>
@@ -449,7 +449,7 @@ function ReturnModal({ onClose, onSaved }) {
               {/* REFUND */}
               <div className="text-sm font-medium text-right text-primary-600">
 
-                Refund: Rs{' '}
+                Refund: SAR{' '}
                 {selectedItems
                   .reduce(
                     (s, i) =>
@@ -679,7 +679,7 @@ export default function ReturnsPage() {
                     </td>
 
                     <td className="font-semibold text-red-500">
-                      Rs{' '}
+                      SAR{' '}
                       {Number(
                         r.totalRefund
                       ).toLocaleString()}
@@ -693,7 +693,7 @@ export default function ReturnsPage() {
                       {new Date(
                         r.createdAt
                       ).toLocaleDateString(
-                        'en-PK'
+                        'en-SA'
                       )}
                     </td>
 

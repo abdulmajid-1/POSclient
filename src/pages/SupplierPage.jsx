@@ -19,8 +19,8 @@ import {
 
 import toast from 'react-hot-toast';
 
-const formatPKR = (n) =>
-    `Rs ${Number(n || 0).toLocaleString('en-PK')}`;
+const formatSAR = (n) =>
+    `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
 /* =========================================
    SUPPLIER DETAILS MODAL
@@ -97,7 +97,7 @@ function SupplierDetailsModal({ supplier, onClose }) {
                         <span>Total Purchases</span>
 
                         <span className="font-semibold text-slate-800">
-                            {formatPKR(supplier.totalPurchases)}
+                            {formatSAR(supplier.totalPurchases)}
                         </span>
                     </div>
 
@@ -105,7 +105,7 @@ function SupplierDetailsModal({ supplier, onClose }) {
                         <span>Total Paid</span>
 
                         <span className="font-semibold text-green-600">
-                            {formatPKR(supplier.totalPaid)}
+                            {formatSAR(supplier.totalPaid)}
                         </span>
                     </div>
 
@@ -114,7 +114,7 @@ function SupplierDetailsModal({ supplier, onClose }) {
                         <span>Remaining</span>
 
                         <span className="text-primary-600">
-                            {formatPKR(
+                            {formatSAR(
                                 (supplier.totalPurchases || 0) -
                                 (supplier.totalPaid || 0)
                             )}
@@ -236,7 +236,7 @@ function AddPurchaseModal({ supplier, onClose, onSubmit }) {
                             </span>
 
                             <span className="font-bold text-primary-600">
-                                {formatPKR(remaining)}
+                                {formatSAR(remaining)}
                             </span>
                         </div>
 
@@ -823,15 +823,15 @@ export default function SupplierPage() {
                                     </td>
 
                                     <td>
-                                        {formatPKR(s.totalPurchases)}
+                                        {formatSAR(s.totalPurchases)}
                                     </td>
 
                                     <td className="text-green-600">
-                                        {formatPKR(s.totalPaid)}
+                                        {formatSAR(s.totalPaid)}
                                     </td>
 
                                     <td className="font-semibold text-primary-600">
-                                        {formatPKR(
+                                        {formatSAR(
                                             (s.totalPurchases || 0) -
                                             (s.totalPaid || 0)
                                         )}

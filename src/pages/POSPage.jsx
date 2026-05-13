@@ -5,221 +5,8 @@ import { MdSearch, MdAdd, MdRemove, MdDelete, MdReceipt, MdPrint, MdClose, MdSho
 import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 
-const formatPKR = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK')}`;
+const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
-
-// function InvoiceModal({ sale, onClose }) {
-//   const invoiceRef = useRef();
-//   const handlePrint = useReactToPrint({
-//     contentRef: invoiceRef,
-//     documentTitle: `Invoice-${sale.invoiceNumber}`,
-//   });
-
-//   return (
-//     <div className="modal-overlay">
-//       <div className="modal-box max-w-4xl w-full">
-
-//         {/* Header Actions */}
-//         <div className="flex items-center justify-between p-4 border-b no-print">
-//           <h2 className="font-bold text-slate-800">Invoice Preview</h2>
-//           <div className="flex gap-2">
-//             <button onClick={handlePrint} className="btn-primary">
-//               <MdPrint size={16} /> Print / PDF
-//             </button>
-//             <button onClick={onClose} className="btn-secondary">
-//               <MdClose size={16} />
-//             </button>
-//           </div>
-//         </div>
-
-//         {/* INVOICE CONTENT */}
-//         <div ref={invoiceRef} className="p-8 text-sm text-slate-800">
-//           {/* TITLE */}
-//           <div className="grid grid-cols-3 items-center mb-6">
-
-//             {/* LEFT SIDE (English) */}
-//             <div className="text-left">
-//               <h1 className="text-lg font-bold">
-//                 Ewan Al-Hazm Trading Establishment
-//               </h1>
-
-//               <h2>Address : As Saadah, OAJA4419، 4419 ابن الحدادية، 9624, Al-Kharj 16443, Saudi Arabia</h2>
-//               <h2>Mobile: 059 571 7520</h2>
-
-//             </div>
-
-//             {/* CENTER */}
-//             <div className="text-center">
-//               <h1 className="text-2xl font-bold">TAX INVOICE</h1>
-//               <p className="text-slate-500 text-sm">فاتورة ضريبية</p>
-//               <p className="text-xs text-slate-500">
-//                 VAT No: 313147090700003
-//               </p>
-
-//             </div>
-
-//             {/* RIGHT SIDE (Arabic) */}
-//             <div className="text-right">
-//               <h1 className="text-lg font-bold">
-//                 مؤسسة ايوان الحزم التجارية
-//               </h1>
-//               <p className="text-xs text-slate-500">
-//                 رقم ضريبة : 313147090700003
-//               </p>
-//             </div>
-
-//           </div>
-
-
-//           {/* TOP SECTION */}
-//           <div className="grid grid-cols-2 gap-6 mb-6">
-
-//             {/* FROM */}
-//             <div className="p-4 border rounded-lg">
-//               <p className="font-bold mb-2">From</p>
-//               <p className="font-semibold">مؤسسة ايوان الحزم التجارية</p>
-//               <p className="text-xs text-slate-400">VAT: 313147090700003</p>
-//             </div>
-
-//             {/* TO */}
-//             <div className="p-4 border rounded-lg">
-//               <p className="font-bold mb-2">To</p>
-//               <p className="font-semibold">Customer : {sale.customer?.name || "Walk-in Customer"}</p>
-//               {sale.customer?.phone && (
-//                 <p className="text-slate-500">Mobile: {sale.customer.phone}</p>
-//               )}
-//             </div>
-
-//           </div>
-
-//           {/* INVOICE META */}
-//           <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
-
-//             <div className="border p-3 rounded">
-//               <p className="text-slate-500">Invoice No</p>
-//               <p className="font-semibold">{sale.invoiceNumber}</p>
-//             </div>
-
-//             <div className="border p-3 rounded">
-//               <p className="text-slate-500">Date</p>
-//               <p className="font-semibold">
-//                 {new Date(sale.createdAt || Date.now()).toLocaleString()}
-//               </p>
-//             </div>
-
-//             <div className="border p-3 rounded">
-//               <p className="text-slate-500">Currency</p>
-//               <p className="font-semibold">SAR</p>
-//             </div>
-
-//           </div>
-
-//           {/* TABLE */}
-//           <table className="w-full border text-xs mb-6">
-//             <thead className="bg-slate-100">
-//               <tr>
-//                 <th className="p-2 text-left">No. </th>
-//                 <th className="p-2 text-left">Product Name</th>
-//                 <th className="p-2">Unit Price</th>
-//                 <th className="p-2">Qty</th>
-//                 <th className="p-2">Subtotal</th>
-//                 <th className="p-2">VAT %</th>
-//                 <th className="p-2">VAT Amt</th>
-//                 <th className="p-2">Total inc VAT</th>
-//               </tr>
-//             </thead>
-
-//             <tbody>
-//               {sale.items.map((item, i) => (
-//                 <tr key={i} className="border-t">
-
-//                   {/* No. column */}
-//                   <td className="p-2 text-center">{i + 1}</td>
-
-//                   <td className="p-2">{item.productName}</td>
-
-//                   <td className="p-2 text-center">
-//                     {formatPKR(item.unitPrice)}
-//                   </td>
-
-//                   <td className="p-2 text-center">
-//                     {item.quantity}
-//                   </td>
-
-//                   <td className="p-2 text-center">
-//                     {formatPKR(item.totalPrice)}
-//                   </td>
-
-//                   <td className="p-2 text-center">
-//                     {sale.taxRate || 0}%
-//                   </td>
-
-//                   <td className="p-2 text-center">
-//                     {formatPKR(sale.tax || 0)}
-//                   </td>
-
-//                   <td className="p-2 text-center font-semibold">
-//                     {formatPKR(item.totalPrice + (sale.tax || 0))}
-//                   </td>
-
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-
-//           {/* SUMMARY */}
-//           <div className="flex justify-end mb-6">
-//             <div className="w-80 border rounded p-4 text-xs space-y-2">
-
-//               <div className="flex justify-between">
-//                 <span>Subtotal</span>
-//                 <span>{formatPKR(sale.subtotal)}</span>
-//               </div>
-
-//               {sale.discount > 0 && (
-//                 <div className="flex justify-between text-red-500">
-//                   <span>Discount</span>
-//                   <span>- {formatPKR(sale.discount)}</span>
-//                 </div>
-//               )}
-
-//               <div className="flex justify-between">
-//                 <span>VAT</span>
-//                 <span>{formatPKR(sale.tax)}</span>
-//               </div>
-
-//               <div className="flex justify-between font-bold border-t pt-2">
-//                 <span>Grand Total</span>
-//                 <span className="text-primary-600">{formatPKR(sale.total)}</span>
-//               </div>
-
-//               <div className="flex justify-between text-slate-500">
-//                 <span>Payment</span>
-//                 <span className="capitalize">{sale.paymentMethod}</span>
-//               </div>
-
-//             </div>
-//           </div>
-
-//           {/* AMOUNT IN WORDS */}
-//           {/* <div className="mb-6 text-xs border p-3 rounded">
-//             <p className="text-slate-500">Amount in Words</p>
-//             <p className="font-medium">
-//               {sale.amountInWords || "Not available"}
-//             </p>
-//           </div> */}
-
-//           {/* FOOTER */}
-//           <div className="text-center text-[10px] text-slate-400 border-t pt-4">
-//             <p>AB Traders - Powered POS System</p>
-//             <p>Thank you for your business</p>
-//           </div>
-
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
 
 function InvoiceModal({ sale, onClose }) {
   const invoiceRef = useRef();
@@ -375,7 +162,7 @@ function InvoiceModal({ sale, onClose }) {
                   <td className="p-2">{item.productName}</td>
 
                   <td className="p-2 text-center">
-                    {formatPKR(item.unitPrice)}
+                    {formatSAR(item.unitPrice)}
                   </td>
 
                   <td className="p-2 text-center">
@@ -383,7 +170,7 @@ function InvoiceModal({ sale, onClose }) {
                   </td>
 
                   <td className="p-2 text-center">
-                    {formatPKR(item.totalPrice)}
+                    {formatSAR(item.totalPrice)}
                   </td>
 
                   <td className="p-2 text-center">
@@ -391,11 +178,11 @@ function InvoiceModal({ sale, onClose }) {
                   </td>
 
                   <td className="p-2 text-center">
-                    {formatPKR(sale.tax || 0)}
+                    {formatSAR(sale.tax || 0)}
                   </td>
 
                   <td className="p-2 text-center font-semibold">
-                    {formatPKR(item.totalPrice + (sale.tax || 0))}
+                    {formatSAR(item.totalPrice + (sale.tax || 0))}
                   </td>
 
                 </tr>
@@ -411,25 +198,25 @@ function InvoiceModal({ sale, onClose }) {
 
               <div className="flex justify-between">
                 <span>Subtotal / المجموع</span>
-                <span>{formatPKR(sale.subtotal)}</span>
+                <span>{formatSAR(sale.subtotal)}</span>
               </div>
 
               {sale.discount > 0 && (
                 <div className="flex justify-between text-red-500">
                   <span>Discount / الخصم</span>
-                  <span>- {formatPKR(sale.discount)}</span>
+                  <span>- {formatSAR(sale.discount)}</span>
                 </div>
               )}
 
               <div className="flex justify-between">
                 <span>VAT / الضريبة</span>
-                <span>{formatPKR(sale.tax)}</span>
+                <span>{formatSAR(sale.tax)}</span>
               </div>
 
               <div className="flex justify-between font-bold border-t pt-2">
                 <span>Grand Total / الإجمالي</span>
                 <span className="text-primary-600">
-                  {formatPKR(sale.total)}
+                  {formatSAR(sale.total)}
                 </span>
               </div>
 
@@ -560,7 +347,7 @@ export default function POSPage() {
               </div>
               <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
               <p className="text-xs text-slate-400 truncate">{p.sku}</p>
-              <p className="text-sm font-bold text-primary-600 mt-1">Rs {Number(p.salePrice).toLocaleString()}</p>
+              <p className="text-sm font-bold text-primary-600 mt-1">SAR {Number(p.salePrice).toLocaleString()}</p>
               <p className={`text-xs mt-0.5 ${p.quantity <= p.lowStockThreshold ? 'text-amber-500' : 'text-slate-400'}`}>
                 {p.quantity} in stock
               </p>
@@ -601,7 +388,7 @@ export default function POSPage() {
                     {item.productName}
                   </p>
                   <p className="text-xs text-primary-600">
-                    Rs {Number(item.unitPrice).toLocaleString()}
+                    SAR {Number(item.unitPrice).toLocaleString()}
                   </p>
                 </div>
 
@@ -689,21 +476,24 @@ export default function POSPage() {
                   onChange={(e) => setDiscountType(e.target.value)}
                   className="input text-xs py-1.5 w-14 px-1"
                 >
-                  <option value="fixed">Rs</option>
+                  <option value="fixed">SAR</option>
                   <option value="percentage">%</option>
                 </select>
               </div>
             </div>
+            <div>
+              <label className="label text-xs">Tax Percent (%)</label>
 
-            <input
-              type="number"
-              value={taxRate}
-              onChange={(e) => setTaxRate(Number(e.target.value))}
-              min={0}
-              className="input text-xs py-1.5"
-            />
+              <input
+                type="number"
+                value={taxRate}
+                onChange={(e) => setTaxRate(Number(e.target.value))}
+                min={0}
+                placeholder="Enter tax %"
+                className="input text-xs py-1.5"
+              />
+            </div>
           </div>
-
           <div>
             <label className="label text-xs">Payment Method</label>
             <select
@@ -722,26 +512,26 @@ export default function POSPage() {
           <div className="bg-slate-50 rounded-xl p-3 space-y-1 text-sm">
             <div className="flex justify-between text-slate-500">
               <span>Subtotal</span>
-              <span>{formatPKR(subtotal)}</span>
+              <span>{formatSAR(subtotal)}</span>
             </div>
 
             {discountAmt > 0 && (
               <div className="flex justify-between text-red-500">
                 <span>Discount</span>
-                <span>- {formatPKR(discountAmt)}</span>
+                <span>- {formatSAR(discountAmt)}</span>
               </div>
             )}
 
             {taxAmt > 0 && (
               <div className="flex justify-between text-slate-500">
                 <span>Tax ({taxRate}%)</span>
-                <span>{formatPKR(taxAmt)}</span>
+                <span>{formatSAR(taxAmt)}</span>
               </div>
             )}
 
             <div className="flex justify-between font-bold text-base pt-1 border-t border-slate-200">
               <span>Total</span>
-              <span className="text-primary-600">{formatPKR(total)}</span>
+              <span className="text-primary-600">{formatSAR(total)}</span>
             </div>
           </div>
 

@@ -6,7 +6,7 @@ export default function Navbar({ onMenuToggle }) {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const today = new Date().toLocaleDateString('en-PK', {
+  const today = new Date().toLocaleDateString('en-SA', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 

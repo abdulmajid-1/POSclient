@@ -5,7 +5,7 @@ import { MdAssessment, MdDownload, MdPrint } from 'react-icons/md';
 import toast from 'react-hot-toast';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
-const formatPKR = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK')}`;
+const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
 export default function ReportsPage() {
   const [tab, setTab] = useState('sales');
@@ -72,9 +72,9 @@ export default function ReportsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
                   { label: 'Total Sales', value: data.totals?.count || 0 },
-                  { label: 'Revenue', value: formatPKR(data.totals?.revenue) },
-                  { label: 'Discount Given', value: formatPKR(data.totals?.discount) },
-                  { label: 'Tax Collected', value: formatPKR(data.totals?.tax) },
+                  { label: 'Revenue', value: formatSAR(data.totals?.revenue) },
+                  { label: 'Discount Given', value: formatSAR(data.totals?.discount) },
+                  { label: 'Tax Collected', value: formatSAR(data.totals?.tax) },
                 ].map((s) => (
                   <div key={s.label} className="card text-center">
                     <p className="text-slate-400 text-xs mb-1">{s.label}</p>
@@ -90,7 +90,7 @@ export default function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="_id" tick={{ fontSize: 11, fill: '#94a3b8' }} />
                       <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                      <Tooltip formatter={(v) => [formatPKR(v), 'Revenue']} />
+                      <Tooltip formatter={(v) => [formatSAR(v), 'Revenue']} />
                       <Bar dataKey="revenue" fill="#2563eb" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -103,7 +103,7 @@ export default function ReportsPage() {
           {tab === 'expenses' && (
             <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="card text-center"><p className="text-slate-400 text-xs mb-1">Total Expenses</p><p className="text-2xl font-bold text-red-500">{formatPKR(data.totals?.total)}</p></div>
+                <div className="card text-center"><p className="text-slate-400 text-xs mb-1">Total Expenses</p><p className="text-2xl font-bold text-red-500">{formatSAR(data.totals?.total)}</p></div>
                 <div className="card text-center"><p className="text-slate-400 text-xs mb-1">Categories</p><p className="text-2xl font-bold text-slate-800">{data.byCategory?.length}</p></div>
               </div>
               {data.byCategory?.length > 0 && (
@@ -114,7 +114,7 @@ export default function ReportsPage() {
                       <Pie data={data.byCategory} dataKey="total" nameKey="_id" cx="50%" cy="50%" outerRadius={100} label={({ _id, percent }) => `${_id} (${(percent * 100).toFixed(0)}%)`}>
                         {data.byCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v) => formatPKR(v)} />
+                      <Tooltip formatter={(v) => formatSAR(v)} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -127,11 +127,11 @@ export default function ReportsPage() {
             <div className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {[
-                  { label: 'Revenue', value: formatPKR(data.data?.revenue), color: 'text-emerald-600' },
-                  { label: 'Expenses', value: formatPKR(data.data?.expenses), color: 'text-red-500' },
-                  { label: 'Returns', value: formatPKR(data.data?.returns), color: 'text-amber-500' },
-                  { label: 'Gross Profit', value: formatPKR(data.data?.grossProfit), color: 'text-blue-600' },
-                  { label: 'Net Profit', value: formatPKR(data.data?.netProfit), color: data.data?.netProfit >= 0 ? 'text-teal-600' : 'text-red-600' },
+                  { label: 'Revenue', value: formatSAR(data.data?.revenue), color: 'text-emerald-600' },
+                  { label: 'Expenses', value: formatSAR(data.data?.expenses), color: 'text-red-500' },
+                  { label: 'Returns', value: formatSAR(data.data?.returns), color: 'text-amber-500' },
+                  { label: 'Gross Profit', value: formatSAR(data.data?.grossProfit), color: 'text-blue-600' },
+                  { label: 'Net Profit', value: formatSAR(data.data?.netProfit), color: data.data?.netProfit >= 0 ? 'text-teal-600' : 'text-red-600' },
                 ].map((s) => (
                   <div key={s.label} className="card text-center">
                     <p className="text-slate-400 text-xs mb-1">{s.label}</p>
@@ -151,7 +151,7 @@ export default function ReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
                     <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                    <Tooltip formatter={(v) => formatPKR(v)} />
+                    <Tooltip formatter={(v) => formatSAR(v)} />
                     <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]}>
                       {['#10b981', '#ef4444', '#f59e0b', '#2563eb'].map((c, i) => <Cell key={i} fill={c} />)}
                     </Bar>
@@ -167,8 +167,8 @@ export default function ReportsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {[
                   { label: 'Total Products', value: data.totals?.totalProducts || 0 },
-                  { label: 'Stock Value (Cost)', value: formatPKR(data.totals?.totalStockValue) },
-                  { label: 'Stock Value (Sale)', value: formatPKR(data.totals?.totalSaleValue) },
+                  { label: 'Stock Value (Cost)', value: formatSAR(data.totals?.totalStockValue) },
+                  { label: 'Stock Value (Sale)', value: formatSAR(data.totals?.totalSaleValue) },
                 ].map((s) => (
                   <div key={s.label} className="card text-center">
                     <p className="text-slate-400 text-xs mb-1">{s.label}</p>
@@ -186,9 +186,9 @@ export default function ReportsPage() {
                         <td><span className="badge-blue">{p.sku}</span></td>
                         <td><span className="badge-gray">{p.category}</span></td>
                         <td><span className={p.quantity <= p.lowStockThreshold ? 'badge-red' : 'badge-green'}>{p.quantity}</span></td>
-                        <td>Rs {Number(p.purchasePrice).toLocaleString()}</td>
-                        <td>Rs {Number(p.salePrice).toLocaleString()}</td>
-                        <td className="font-semibold">Rs {Number(p.purchasePrice * p.quantity).toLocaleString()}</td>
+                        <td>SAR {Number(p.purchasePrice).toLocaleString()}</td>
+                        <td>SAR {Number(p.salePrice).toLocaleString()}</td>
+                        <td className="font-semibold">SAR {Number(p.purchasePrice * p.quantity).toLocaleString()}</td>
                       </tr>
                     ))}</tbody>
                   </table>
