@@ -302,29 +302,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Filters */}
-      {/* <div className="card p-4 flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or SKU..." className="input pl-9" />
-        </div>
-        <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="input sm:w-44">
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="input sm:w-44">
-          <option value="">All Suppliers</option>
-          {suppliers.map((s) => (
-            <option key={s._id} value={s._id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </div> */}
+
       {/* Filters */}
       <div className="card p-4 flex flex-col sm:flex-row gap-3">
 
@@ -350,7 +328,6 @@ export default function InventoryPage() {
           className="input sm:w-44"
         >
           <option value="">All Suppliers</option>
-          {console.log(suppliers)}
           {suppliers.map((s) => (
             <option key={s._id} value={s._id}>
               {s.name}
