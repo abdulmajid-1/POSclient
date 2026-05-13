@@ -314,8 +314,7 @@ export default function SalesPage() {
               <thead>
                 <tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Subtotal</th><th>Discount</th><th>Total</th><th>Payment</th><th>Date</th><th>Status</th><th></th></tr>
               </thead>
-              {console.log(sales)
-              }
+
               <tbody>
                 {sales.map((s) => (
                   <tr key={s._id}>
