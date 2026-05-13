@@ -5,72 +5,250 @@ import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
 
+
 const formatPKR = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK')}`;
 
 function SaleDetailModal({ saleId, onClose }) {
   const [sale, setSale] = useState(null);
   const [loading, setLoading] = useState(true);
-  const printRef = useRef();
-  const handlePrint = useReactToPrint({ contentRef: printRef, documentTitle: `Invoice-${sale?.invoiceNumber}` });
+
+  const invoiceRef = useRef();
+
+  const handlePrint = useReactToPrint({
+    contentRef: invoiceRef,
+    documentTitle: `Invoice-${sale?.invoiceNumber}`,
+  });
 
   useEffect(() => {
-    getSale(saleId).then(({ data }) => setSale(data.sale)).catch(() => toast.error('Failed to load sale')).finally(() => setLoading(false));
+    getSale(saleId)
+      .then(({ data }) => setSale(data.sale))
+      .catch(() => toast.error('Failed to load sale'))
+      .finally(() => setLoading(false));
   }, [saleId]);
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-box max-w-2xl">
+    <div
+      className="modal-overlay"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="modal-box max-w-4xl w-full">
+
+        {/* HEADER */}
         <div className="flex items-center justify-between p-4 border-b no-print">
-          <h2 className="font-bold text-slate-800">Sale Details</h2>
+          <h2 className="font-bold text-slate-800">Invoice Preview</h2>
+
           <div className="flex gap-2">
-            {sale && <button onClick={handlePrint} className="btn-primary text-xs py-1.5"><MdPrint size={14} /> Print</button>}
-            <button onClick={onClose} className="btn-secondary text-xs py-1.5"><MdClose size={14} /></button>
+            {sale && (
+              <button onClick={handlePrint} className="btn-primary text-xs py-1.5">
+                <MdPrint size={14} /> Print
+              </button>
+            )}
+
+            <button onClick={onClose} className="btn-secondary text-xs py-1.5">
+              <MdClose size={14} />
+            </button>
           </div>
         </div>
+
+        {/* CONTENT */}
         {loading ? (
-          <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" /></div>
-        ) : sale && (
-          <div ref={printRef} className="p-6">
-            <div className="flex justify-between mb-6">
-              <div><h3 className="font-bold text-slate-800 text-lg">AB Traders</h3><p className="text-slate-400 text-xs">Invoice</p></div>
-              <div className="text-right">
-                <p className="font-bold text-primary-600">{sale.invoiceNumber}</p>
-                <p className="text-xs text-slate-400">{new Date(sale.createdAt).toLocaleString('en-PK')}</p>
-                <span className={`badge-${sale.status === 'completed' ? 'green' : 'red'} mt-1`}>{sale.status}</span>
+          <div className="flex justify-center p-10">
+            <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : sale ? (
+          <div ref={invoiceRef} className="p-8 text-sm text-slate-800">
+
+            {/* ================= TITLE (SAME AS POS) ================= */}
+            <div className="grid grid-cols-3 items-center mb-6">
+
+              {/* LEFT - ENGLISH */}
+              <div className="text-left">
+                <h1 className="text-lg font-bold">
+                  Ewan Al-Hazm Trading Establishment
+                </h1>
+                <p className="text-xs text-slate-500">
+                  Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia
+                </p>
+                <p className="text-xs text-slate-500">
+                  Mobile: 059 571 7520
+                </p>
               </div>
+
+              {/* CENTER */}
+              <div className="text-center">
+                <h1 className="text-2xl font-bold">TAX INVOICE</h1>
+                <p className="text-slate-500 text-sm">فاتورة ضريبية</p>
+                <p className="text-xs text-slate-500">
+                  VAT No: 313147090700003
+                </p>
+              </div>
+
+              {/* RIGHT - ARABIC */}
+              <div className="text-right">
+                <h1 className="text-lg font-bold">
+                  مؤسسة ايوان الحزم التجارية
+                </h1>
+                <p className="text-xs text-slate-500">
+                  العنوان: السعادة، الخرج، السعودية
+                </p>
+                <p className="text-xs text-slate-500">
+                  الجوال:٠٥٩٥٧١٧٥٢٠
+                </p>
+              </div>
+
             </div>
-            <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-              <div><p className="text-slate-400 text-xs">Customer</p><p className="font-medium">{sale.customer?.name}</p>{sale.customer?.phone && <p className="text-slate-400">{sale.customer.phone}</p>}</div>
-              <div><p className="text-slate-400 text-xs">Payment</p><p className="font-medium capitalize">{sale.paymentMethod}</p></div>
+
+            {/* ================= FROM / TO ================= */}
+            <div className="grid grid-cols-2 gap-6 mb-6">
+
+              {/* FROM */}
+              <div className="p-4 border rounded-lg">
+                <p className="font-bold mb-2">From / من</p>
+
+                <p className="font-semibold">
+                  Ewan Al-Hazm Trading Establishment
+                </p>
+
+                <p className="text-xs text-slate-400">
+                  مؤسسة ايوان الحزم التجارية
+                </p>
+
+                <p className="text-xs text-slate-400">
+                  VAT / ضريبة: 313147090700003
+                </p>
+              </div>
+
+              {/* TO */}
+              <div className="p-4 border rounded-lg">
+                <p className="font-bold mb-2">To / إلى</p>
+
+                <p className="font-semibold">
+                  Customer / العميل: {sale.customer?.name || "Walk-in Customer"}
+                </p>
+
+                {sale.customer?.phone && (
+                  <p className="text-slate-500">
+                    Mobile / الجوال: {sale.customer.phone}
+                  </p>
+                )}
+              </div>
+
             </div>
-            <table className="w-full text-sm mb-4">
-              <thead><tr className="border-b border-slate-200"><th className="text-left py-2 text-slate-500 font-medium">Product</th><th className="text-center py-2 text-slate-500 font-medium">Qty</th><th className="text-right py-2 text-slate-500 font-medium">Price</th><th className="text-right py-2 text-slate-500 font-medium">Total</th></tr></thead>
+            {/* ================= META ================= */}
+            <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
+
+              <div className="border p-3 rounded">
+                <p className="text-slate-500">Invoice No / رقم</p>
+                <p className="font-semibold">{sale.invoiceNumber}</p>
+              </div>
+
+              <div className="border p-3 rounded">
+                <p className="text-slate-500">Date / التاريخ</p>
+                <p className="font-semibold">
+                  {new Date(sale.createdAt).toLocaleString()}
+                </p>
+              </div>
+
+              <div className="border p-3 rounded">
+                <p className="text-slate-500">Currency / العملة</p>
+                <p className="font-semibold">SAR / ريال</p>
+              </div>
+
+            </div>
+
+            {/* ================= TABLE ================= */}
+            <table className="w-full border text-xs mb-6">
+
+              <thead className="bg-slate-100">
+                <tr>
+                  <th className="p-2 text-left">No / رقم</th>
+                  <th className="p-2 text-left">Product / المنتج</th>
+                  <th className="p-2">Unit Price / سعر الوحدة</th>
+                  <th className="p-2">Qty / الكمية</th>
+                  <th className="p-2">Subtotal / الإجمالي</th>
+                  <th className="p-2">VAT % / الضريبة</th>
+                  <th className="p-2">VAT Amt / مبلغ الضريبة</th>
+                  <th className="p-2">Total / الإجمالي النهائي</th>
+                </tr>
+              </thead>
+
               <tbody>
                 {sale.items.map((item, i) => (
-                  <tr key={i} className="border-b border-slate-50">
-                    <td className="py-2">{item.productName}</td>
-                    <td className="py-2 text-center">{item.quantity}</td>
-                    <td className="py-2 text-right">{formatPKR(item.unitPrice)}</td>
-                    <td className="py-2 text-right font-medium">{formatPKR(item.totalPrice)}</td>
+                  <tr key={i} className="border-t">
+
+                    <td className="p-2 text-center">{i + 1}</td>
+
+                    <td className="p-2">{item.productName}</td>
+
+                    <td className="p-2 text-center">
+                      {formatPKR(item.unitPrice)}
+                    </td>
+
+                    <td className="p-2 text-center">
+                      {item.quantity}
+                    </td>
+
+                    <td className="p-2 text-center">
+                      {formatPKR(item.totalPrice)}
+                    </td>
+
+                    <td className="p-2 text-center">
+                      {sale.taxRate || 0}%
+                    </td>
+
+                    <td className="p-2 text-center">
+                      {formatPKR(sale.tax || 0)}
+                    </td>
+
+                    <td className="p-2 text-center font-semibold">
+                      {formatPKR(item.totalPrice + (sale.tax || 0))}
+                    </td>
+
                   </tr>
                 ))}
               </tbody>
+
             </table>
+
+
+            {/* ================= SUMMARY ================= */}
             <div className="flex justify-end">
-              <div className="w-56 space-y-1 text-sm">
-                <div className="flex justify-between"><span className="text-slate-400">Subtotal</span><span>{formatPKR(sale.subtotal)}</span></div>
-                {sale.discount > 0 && <div className="flex justify-between text-red-500"><span>Discount</span><span>-{formatPKR(sale.discount)}</span></div>}
-                {sale.tax > 0 && <div className="flex justify-between"><span className="text-slate-400">Tax</span><span>{formatPKR(sale.tax)}</span></div>}
-                <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span className="text-primary-600">{formatPKR(sale.total)}</span></div>
+              <div className="w-80 border rounded p-4 text-xs space-y-2">
+
+                <div className="flex justify-between">
+                  <span>Subtotal / المجموع</span>
+                  <span>{formatPKR(sale.subtotal)}</span>
+                </div>
+
+                {sale.discount > 0 && (
+                  <div className="flex justify-between text-red-500">
+                    <span>Discount / الخصم</span>
+                    <span>-{formatPKR(sale.discount)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between">
+                  <span>Tax / الضريبة</span>
+                  <span>{formatPKR(sale.tax)}</span>
+                </div>
+
+                <div className="flex justify-between font-bold border-t pt-2">
+                  <span>Total / الإجمالي</span>
+                  <span className="text-primary-600">
+                    {formatPKR(sale.total)}
+                  </span>
+                </div>
+
               </div>
             </div>
+
           </div>
-        )}
+        ) : null}
+
       </div>
     </div>
   );
 }
-
 export default function SalesPage() {
   const [sales, setSales] = useState([]);
   const [total, setTotal] = useState(0);
@@ -79,19 +257,36 @@ export default function SalesPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+
 
   const fetchSales = useCallback(async () => {
     setLoading(true);
+
     try {
-      const { data } = await getSales({ search, startDate, endDate });
-      setSales(data.sales);
-      setTotal(data.total);
-    } catch { toast.error('Failed to load sales'); }
-    finally { setLoading(false); }
-  }, [search, startDate, endDate]);
+      const { data } = await getSales({
+        search,
+        startDate,
+        endDate,
+        page,
+        limit,
+      });
 
-  useEffect(() => { fetchSales(); }, [fetchSales]);
+      setSales(data.sales || []);
+      setTotal(data.total || 0);
+      setTotalPages(data.totalPages || 1);
 
+    } catch (error) {
+      toast.error('Failed to load sales');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, startDate, endDate, page, limit]);
+  useEffect(() => {
+    fetchSales();
+  }, [fetchSales]);
   return (
     <div className="space-y-5 animate-fade-in">
       <div>
@@ -119,12 +314,15 @@ export default function SalesPage() {
               <thead>
                 <tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Subtotal</th><th>Discount</th><th>Total</th><th>Payment</th><th>Date</th><th>Status</th><th></th></tr>
               </thead>
+              {console.log(sales)
+              }
               <tbody>
                 {sales.map((s) => (
                   <tr key={s._id}>
+
                     <td><span className="badge-blue font-mono">{s.invoiceNumber}</span></td>
                     <td className="font-medium text-slate-700">{s.customer?.name}</td>
-                    <td className="text-slate-500">{s.items?.length} items</td>
+                    <td className="text-slate-500">{s.items[0].quantity} items</td>
                     <td>{formatPKR(s.subtotal)}</td>
                     <td className="text-red-500">{s.discount > 0 ? `- ${formatPKR(s.discount)}` : '—'}</td>
                     <td className="font-semibold text-emerald-600">{formatPKR(s.total)}</td>
@@ -145,6 +343,29 @@ export default function SalesPage() {
       </div>
 
       {selectedSaleId && <SaleDetailModal saleId={selectedSaleId} onClose={() => setSelectedSaleId(null)} />}
+      <div className="flex items-center justify-between p-4 border-t">
+
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((p) => p - 1)}
+          className="btn-secondary text-xs disabled:opacity-50"
+        >
+          Previous
+        </button>
+
+        <div className="text-sm text-slate-500">
+          Page {page} of {totalPages}
+        </div>
+
+        <button
+          disabled={page === totalPages}
+          onClick={() => setPage((p) => p + 1)}
+          className="btn-secondary text-xs disabled:opacity-50"
+        >
+          Next
+        </button>
+
+      </div>
     </div>
   );
 }

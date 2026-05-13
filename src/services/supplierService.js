@@ -1,4 +1,28 @@
 import api from "./api";
 
-export const getSuppliers = () => api.get("/suppliers");
-export const createSupplier = (data) => api.post("/suppliers", data);
+// CREATE SUPPLIER
+export const createSupplier = (data) =>
+    api.post("/suppliers", data);
+
+// GET ALL SUPPLIERS
+export const getSuppliers = () =>
+    api.get("/suppliers");
+
+// GET SINGLE SUPPLIER
+export const getSupplier = (id) =>
+    api.get(`/suppliers/${id}`);
+
+// UPDATE SUPPLIER
+export const updateSupplier = (id, data) =>
+    api.put(`/suppliers/${id}`, data);
+
+// DELETE (SOFT DELETE)
+export const deleteSupplier = (id) =>
+    api.delete(`/suppliers/${id}`);
+
+// UPDATE PAYMENT
+export const updateSupplierPayment = (id, paidAmount) =>
+    api.patch(`/suppliers/${id}/payment`, { paidAmount });
+
+export const addSupplierPurchase = (id, data) =>
+    api.patch(`/suppliers/${id}/purchase`, data);

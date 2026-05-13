@@ -12,6 +12,7 @@ import ExpensesPage from './pages/ExpensesPage';
 import ReturnsPage from './pages/ReturnsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
+import SupplierPage from './pages/SupplierPage';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/pos" element={<POSPage />} />
               <Route path="/sales" element={<SalesPage />} />
+              <Route path="/suppliers" element={<SupplierPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/returns" element={<ReturnsPage />} />
               <Route path="/reports" element={<ReportsPage />} />

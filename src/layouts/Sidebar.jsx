@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   MdDashboard, MdInventory, MdPointOfSale, MdHistory,
-  MdMoneyOff, MdAssessment, MdSettings, MdLogout, MdKeyboardReturn
+  MdMoneyOff, MdAssessment, MdSettings, MdLogout, MdKeyboardReturn, MdPerson
 } from 'react-icons/md';
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/inventory', label: 'Inventory', icon: MdInventory },
   { to: '/pos', label: 'POS / Billing', icon: MdPointOfSale },
   { to: '/sales', label: 'Sales History', icon: MdHistory },
+  { to: '/suppliers', label: 'Suppliers', icon: MdPerson },
   { to: '/expenses', label: 'Expenses', icon: MdMoneyOff },
   { to: '/returns', label: 'Returns', icon: MdKeyboardReturn },
   { to: '/reports', label: 'Reports', icon: MdAssessment },
