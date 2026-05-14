@@ -131,6 +131,12 @@ function SaleDetailModal({ saleId, onClose }) {
                     Mobile / الجوال: {sale.customer.phone}
                   </p>
                 )}
+
+                {sale.customer?.vatNumber && (
+                  <p className="text-slate-500">
+                    VAT / ضريبة: {sale.customer.vatNumber}
+                  </p>
+                )}
               </div>
 
             </div>

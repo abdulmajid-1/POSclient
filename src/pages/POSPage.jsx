@@ -111,6 +111,12 @@ function InvoiceModal({ sale, onClose }) {
                   Mobile / الجوال: {sale.customer.phone}
                 </p>
               )}
+
+              {sale.customer?.vatNumber && (
+                <p className="text-slate-500">
+                  VAT / ضريبة: {sale.customer.vatNumber}
+                </p>
+              )}
             </div>
 
           </div>
@@ -245,7 +251,7 @@ export default function POSPage() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState([]);
-  const [customer, setCustomer] = useState({ name: 'Walk-in Customer', phone: '' });
+  const [customer, setCustomer] = useState({ name: 'Walk-in Customer', phone: '', vatNumber: '' });
   const [discount, setDiscount] = useState(0);
   const [discountType, setDiscountType] = useState('fixed');
   const [taxRate, setTaxRate] = useState(15);
@@ -276,10 +282,12 @@ export default function POSPage() {
   };
 
   const updateQty = (productId, qty) => {
-    if (qty < 1) return removeFromCart(productId);
+    // allow 0 or empty string so they can type
+    if (qty !== '' && qty < 0) return;
+
     setCart((prev) => prev.map((i) => {
       if (i.productId !== productId) return i;
-      if (qty > i.maxQty) { toast.error('Insufficient stock'); return i; }
+      if (qty !== '' && qty > i.maxQty) { toast.error(`Only ${i.maxQty} in stock`); return i; }
       return { ...i, quantity: qty };
     }));
   };
@@ -288,7 +296,7 @@ export default function POSPage() {
 
   // const subtotal = cart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
   const subtotal = (Array.isArray(cart) ? cart : []).reduce(
-    (s, i) => s + i.unitPrice * i.quantity,
+    (s, i) => s + i.unitPrice * (Number(i.quantity) || 0),
     0
   );
   const discountAmt = discountType === 'percentage' ? (subtotal * discount) / 100 : Number(discount);
@@ -300,7 +308,9 @@ export default function POSPage() {
     setLoading(true);
     try {
       const { data } = await createSale({
-        items: cart.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        items: cart
+          .filter((i) => Number(i.quantity) > 0)
+          .map((i) => ({ productId: i.productId, quantity: Number(i.quantity) })),
         customer,
         discount: Number(discount),
         discountType,
@@ -311,7 +321,7 @@ export default function POSPage() {
       setCart([]);
       setDiscount(0);
       setTaxRate(0);
-      setCustomer({ name: 'Walk-in Customer', phone: '' });
+      setCustomer({ name: 'Walk-in Customer', phone: '', vatNumber: '' });
       toast.success('Sale completed!');
       fetchProducts();
     } catch (err) { toast.error(err.response?.data?.message || 'Sale failed'); }
@@ -366,7 +376,7 @@ export default function POSPage() {
           <h2 className="font-bold text-slate-800 flex items-center gap-2">
             <MdShoppingCart className="text-primary-600" />
             Cart
-            <span className="ml-auto badge-blue">{cart.length} items</span>
+            <span className="ml-auto bg-slate-800 text-white px-2.5 py-0.5 rounded-full text-xs font-medium">{cart.length} items</span>
           </h2>
         </div>
 
@@ -394,28 +404,27 @@ export default function POSPage() {
 
                 <div className="flex items-center gap-1 shrink-0">
                   <button
-                    onClick={() => updateQty(item.productId, item.quantity - 1)}
-                    className="w-6 h-6 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center"
+                    onClick={() => updateQty(item.productId, (Number(item.quantity) || 0) - 1)}
+                    className="w-7 h-7 rounded-full bg-slate-800 text-white hover:bg-slate-700 flex items-center justify-center transition-colors"
                   >
-                    <MdRemove size={14} />
+                    <MdRemove size={16} />
                   </button>
 
                   <input
                     type="number"
                     value={item.quantity}
-                    min={1}
-                    max={item.maxQty}
-                    onChange={(e) =>
-                      updateQty(item.productId, parseInt(e.target.value) || 1)
-                    }
-                    className="w-10 text-center text-sm border border-slate-200 rounded-lg py-0.5"
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? '' : parseInt(e.target.value);
+                      updateQty(item.productId, val);
+                    }}
+                    className="w-12 text-center text-sm font-bold border border-slate-300 rounded-lg py-1 text-slate-800"
                   />
 
                   <button
-                    onClick={() => updateQty(item.productId, item.quantity + 1)}
-                    className="w-6 h-6 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center"
+                    onClick={() => updateQty(item.productId, (Number(item.quantity) || 0) + 1)}
+                    className="w-7 h-7 rounded-full bg-slate-800 text-white hover:bg-slate-700 flex items-center justify-center transition-colors"
                   >
-                    <MdAdd size={14} />
+                    <MdAdd size={16} />
                   </button>
 
                   <button
@@ -434,47 +443,67 @@ export default function POSPage() {
         </div>
 
         {/* Customer + Options */}
-        <div className="p-4 border-t border-slate-100 space-y-3 shrink-0">
-
+        <div className="p-3 border-t border-slate-100 space-y-2 shrink-0">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="label text-xs">Customer Name</label>
+              <label className="label text-[10px] mb-0.5 opacity-70">Name</label>
               <input
                 value={customer.name}
-                onChange={(e) =>
-                  setCustomer({ ...customer, name: e.target.value })
-                }
-                className="input text-xs py-1.5"
+                onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                className="input text-xs py-1"
+                placeholder="Name"
               />
             </div>
-
             <div>
-              <label className="label text-xs">Phone</label>
+              <label className="label text-[10px] mb-0.5 opacity-70">Phone</label>
               <input
                 value={customer.phone}
-                onChange={(e) =>
-                  setCustomer({ ...customer, phone: e.target.value })
-                }
-                className="input text-xs py-1.5"
+                onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                className="input text-xs py-1"
+                placeholder="Phone"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-1">
+              <label className="label text-[10px] mb-0.5 opacity-70">VAT No.</label>
+              <input
+                value={customer.vatNumber}
+                onChange={(e) => setCustomer({ ...customer, vatNumber: e.target.value })}
+                className="input text-xs py-1"
+                placeholder="VAT Number"
+              />
+            </div>
+            <div className="col-span-1">
+              <label className="label text-[10px] mb-0.5 opacity-70">Payment</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="input text-xs py-1"
+              >
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="bank_transfer">Bank</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="label text-xs">Discount</label>
+              <label className="label text-[10px] mb-0.5 opacity-70">Discount</label>
               <div className="flex gap-1">
                 <input
                   type="number"
                   value={discount}
                   onChange={(e) => setDiscount(e.target.value)}
-                  min={0}
-                  className="input text-xs py-1.5 flex-1"
+                  className="input text-xs py-1 flex-1"
                 />
                 <select
                   value={discountType}
                   onChange={(e) => setDiscountType(e.target.value)}
-                  className="input text-xs py-1.5 w-14 px-1"
+                  className="input text-xs py-1 w-12 px-0 text-center"
                 >
                   <option value="fixed">SAR</option>
                   <option value="percentage">%</option>
@@ -482,30 +511,14 @@ export default function POSPage() {
               </div>
             </div>
             <div>
-              <label className="label text-xs">Tax Percent (%)</label>
-
+              <label className="label text-[10px] mb-0.5 opacity-70">Tax (%)</label>
               <input
                 type="number"
                 value={taxRate}
                 onChange={(e) => setTaxRate(Number(e.target.value))}
-                min={0}
-                placeholder="Enter tax %"
-                className="input text-xs py-1.5"
+                className="input text-xs py-1"
               />
             </div>
-          </div>
-          <div>
-            <label className="label text-xs">Payment Method</label>
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="input text-xs py-1.5"
-            >
-              <option value="cash">Cash</option>
-              <option value="card">Card</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="other">Other</option>
-            </select>
           </div>
 
           {/* Summary */}
