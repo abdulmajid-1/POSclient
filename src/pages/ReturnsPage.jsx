@@ -516,17 +516,21 @@ export default function ReturnsPage() {
 
   const [selectedReturn, setSelectedReturn] =
     useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
 
   /* FETCH */
   const fetch = useCallback(async () => {
     setLoading(true);
 
     try {
-      const { data } = await getReturns();
+      const { data } = await getReturns({ page, limit });
 
       setReturns(data.returns || []);
       setFilteredReturns(data.returns || []);
       setTotal(data.total || 0);
+      setTotalPages(Math.ceil((data.total || 0) / limit) || 1);
     } catch {
       toast.error(
         'Failed to load returns'
@@ -534,7 +538,7 @@ export default function ReturnsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     fetch();
@@ -727,6 +731,29 @@ export default function ReturnsPage() {
         )}
 
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between card p-4 mt-4">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(p => p - 1)}
+            className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <div className="text-sm font-bold text-slate-600">
+            Page {page} of {totalPages}
+          </div>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(p => p + 1)}
+            className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* RETURN MODAL */}
       {showModal && (

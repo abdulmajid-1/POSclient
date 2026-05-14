@@ -13,6 +13,7 @@ import ReturnsPage from './pages/ReturnsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import SupplierPage from './pages/SupplierPage';
+import FakeBillPage from './pages/FakeBillPage';
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/returns" element={<ReturnsPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/fake-bill" element={<FakeBillPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
 

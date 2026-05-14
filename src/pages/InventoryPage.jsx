@@ -260,6 +260,9 @@ export default function InventoryPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [supplierFilter, setSupplierFilter] = useState('');
   const [modal, setModal] = useState(null); // null | 'add' | product object
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -268,14 +271,19 @@ export default function InventoryPage() {
         search,
         category: catFilter,
         supplier: supplierFilter,
-        limit: 100,
-      }); setProducts(data.products);
+        page,
+        limit,
+      }); 
+      setProducts(data.products);
       setCategories(data.categories);
       setSuppliers(data.suppliers);
       setTotal(data.total);
+      setTotalPages(data.totalPages || Math.ceil(data.total / limit) || 1);
     } catch { toast.error('Failed to load products'); }
     finally { setLoading(false); }
-  }, [search, catFilter, supplierFilter]);
+  }, [search, catFilter, supplierFilter, page]);
+
+  useEffect(() => { setPage(1); }, [search, catFilter, supplierFilter]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -436,6 +444,29 @@ export default function InventoryPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between card p-4 mt-4">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(p => p - 1)}
+            className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <div className="text-sm font-bold text-slate-600">
+            Page {page} of {totalPages}
+          </div>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(p => p + 1)}
+            className="btn-secondary text-xs disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {modal && (
         <ProductModal

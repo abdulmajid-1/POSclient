@@ -66,6 +66,9 @@ function SaleDetailModal({ saleId, onClose }) {
                 <h1 className="text-lg font-bold">
                   Ewan Al-Hazm Trading Establishment
                 </h1>
+                <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                  Hand Tools - Equipment - Safety - Workshop Supplies
+                </p>
                 <p className="text-xs text-slate-500">
                   Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia
                 </p>
@@ -88,6 +91,9 @@ function SaleDetailModal({ saleId, onClose }) {
                 <h1 className="text-lg font-bold">
                   مؤسسة ايوان الحزم التجارية
                 </h1>
+                <p className="text-[10px] font-semibold text-slate-600 mb-1">
+                  عدد يدوية - معدات - سلامة - لوازم ورش
+                </p>
                 <p className="text-xs text-slate-500">
                   العنوان: السعادة، الخرج، السعودية
                 </p>
@@ -171,6 +177,7 @@ function SaleDetailModal({ saleId, onClose }) {
                   <th className="p-2 text-left">Product / المنتج</th>
                   <th className="p-2">Unit Price / سعر الوحدة</th>
                   <th className="p-2">Qty / الكمية</th>
+                  <th className="p-2">Disc / خصم</th>
                   <th className="p-2">Subtotal / الإجمالي</th>
                   <th className="p-2">VAT % / الضريبة</th>
                   <th className="p-2">VAT Amt / مبلغ الضريبة</th>
@@ -192,6 +199,10 @@ function SaleDetailModal({ saleId, onClose }) {
 
                     <td className="p-2 text-center">
                       {item.quantity}
+                    </td>
+
+                    <td className="p-2 text-center text-red-500">
+                      {item.discount > 0 ? (item.discountType === 'percentage' ? `${item.discount}%` : formatSAR(item.discount)) : '-'}
                     </td>
 
                     <td className="p-2 text-center">
@@ -226,24 +237,43 @@ function SaleDetailModal({ saleId, onClose }) {
                   <span>{formatSAR(sale.subtotal)}</span>
                 </div>
 
-                {sale.discount > 0 && (
-                  <div className="flex justify-between text-red-500">
-                    <span>Discount / الخصم</span>
-                    <span>-{formatSAR(sale.discount)}</span>
+                  <div className="flex justify-between font-bold border-t pt-2">
+                    <span>Total / الإجمالي</span>
+                    <span className="text-primary-600">
+                      {formatSAR(sale.total)}
+                    </span>
                   </div>
-                )}
 
-                <div className="flex justify-between">
-                  <span>Tax / الضريبة</span>
-                  <span>{formatSAR(sale.tax)}</span>
-                </div>
+                  <div className="flex justify-between pt-1">
+                    <span>VAT / الضريبة</span>
+                    <span>{formatSAR(sale.tax)}</span>
+                  </div>
 
-                <div className="flex justify-between font-bold border-t pt-2">
-                  <span>Total / الإجمالي</span>
-                  <span className="text-primary-600">
-                    {formatSAR(sale.total)}
-                  </span>
-                </div>
+                  {sale.discount > 0 && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>Discount on Subtotal Bill / خصم الفاتورة الفرعي</span>
+                      <span>- {formatSAR(sale.discount)}</span>
+                    </div>
+                  )}
+
+                  {(() => {
+                    const itemDiscSum = sale.items.reduce((acc, item) => {
+                      const base = item.unitPrice * item.quantity;
+                      const d = item.discountType === 'percentage' ? (base * item.discount) / 100 : item.discount;
+                      return acc + (Number(d) || 0);
+                    }, 0);
+                    const totalDisc = itemDiscSum + (Number(sale.discount) || 0);
+                    
+                    if (totalDisc > 0) {
+                      return (
+                        <div className="flex justify-between text-red-600 font-bold border-t border-dashed pt-2 mt-2">
+                          <span>Total Discount Given / إجمالي الخصم</span>
+                          <span>- {formatSAR(totalDisc)}</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
 
               </div>
             </div>
@@ -290,6 +320,10 @@ export default function SalesPage() {
       setLoading(false);
     }
   }, [search, startDate, endDate, page, limit]);
+  useEffect(() => {
+    setPage(1);
+  }, [search, startDate, endDate]);
+
   useEffect(() => {
     fetchSales();
   }, [fetchSales]);
@@ -353,7 +387,7 @@ export default function SalesPage() {
         <button
           disabled={page === 1}
           onClick={() => setPage((p) => p - 1)}
-          className="btn-secondary text-xs disabled:opacity-50"
+          className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
         >
           Previous
         </button>

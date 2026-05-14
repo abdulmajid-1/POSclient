@@ -199,6 +199,9 @@ export default function ExpensesPage() {
   const [totalAmount, setTotalAmount] = useState(0);
 
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
 
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
@@ -263,17 +266,24 @@ export default function ExpensesPage() {
         category: catFilter,
         startDate,
         endDate,
+        page,
+        limit,
       });
 
       setExpenses(data.expenses || []);
       setTotal(data.total || 0);
       setTotalAmount(data.totalAmount || 0);
+      setTotalPages(Math.ceil((data.total || 0) / limit) || 1);
 
     } catch {
       toast.error('Failed to load expenses');
     } finally {
       setLoading(false);
     }
+  }, [search, catFilter, rangeType, startDate, endDate, page]);
+
+  useEffect(() => {
+    setPage(1);
   }, [search, catFilter, rangeType, startDate, endDate]);
 
   useEffect(() => {
@@ -303,8 +313,8 @@ export default function ExpensesPage() {
       <div className="flex justify-between items-center">
 
         <div>
-          <h1 className="text-2xl font-bold">Expenses</h1>
-          <p className="text-slate-500 text-sm">
+          <h1 className="text-2xl font-bold text-slate-900">Expenses</h1>
+          <p className="text-slate-500 text-sm font-medium">
             {total} records • SAR {Number(totalAmount || 0).toLocaleString('en-SA')}
           </p>
         </div>
@@ -349,7 +359,7 @@ export default function ExpensesPage() {
             <button
               key={t}
               onClick={() => setRangeType(t)}
-              className={`px-3 py-1 rounded ${rangeType === t ? 'bg-primary-600 text-white' : 'bg-slate-100'
+              className={`px-3 py-1 rounded text-sm font-bold capitalize transition-all ${rangeType === t ? 'bg-primary-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
             >
               {t}
@@ -405,27 +415,24 @@ export default function ExpensesPage() {
               {expenses.map((e) => (
                 <tr key={e._id}>
 
-                  <td>{e.title}</td>
-                  <td>{e.category}</td>
+                  <td className="text-slate-900 font-bold">{e.title}</td>
+                  <td className="text-slate-600 font-medium">{e.category}</td>
 
-                  <td className="text-red-500">
+                  <td className="text-red-600 font-extrabold">
                     SAR {Number(e.amount).toLocaleString('en-SA')}
                   </td>
 
-                  <td>
+                  <td className="text-slate-500 font-medium">
                     {new Date(e.date).toLocaleDateString('en-SA')}
                   </td>
 
                   <td className="flex gap-2">
-
-                    <button onClick={() => setModal(e)}>
-                      <MdEdit />
+                    <button onClick={() => setModal(e)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600">
+                      <MdEdit size={18} />
                     </button>
-
-                    <button onClick={() => handleDelete(e._id)}>
-                      <MdDelete />
+                    <button onClick={() => handleDelete(e._id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500">
+                      <MdDelete size={18} />
                     </button>
-
                   </td>
 
                 </tr>
@@ -436,6 +443,29 @@ export default function ExpensesPage() {
         )}
 
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between card p-4 mt-4">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(p => p - 1)}
+            className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <div className="text-sm font-bold text-slate-600">
+            Page {page} of {totalPages}
+          </div>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(p => p + 1)}
+            className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* MODAL */}
       {modal && (
