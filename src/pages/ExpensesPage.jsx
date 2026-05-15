@@ -9,8 +9,6 @@ import {
 
 import {
   MdAdd,
-  MdEdit,
-  MdDelete,
   MdSearch,
   MdClose,
 } from 'react-icons/md';
@@ -427,11 +425,17 @@ export default function ExpensesPage() {
                   </td>
 
                   <td className="flex gap-2">
-                    <button onClick={() => setModal(e)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600">
-                      <MdEdit size={18} />
+                    <button 
+                      onClick={() => setModal(e)} 
+                      className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all font-bold text-xs"
+                    >
+                      Edit
                     </button>
-                    <button onClick={() => handleDelete(e._id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500">
-                      <MdDelete size={18} />
+                    <button 
+                      onClick={() => handleDelete(e._id)} 
+                      className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-bold text-xs"
+                    >
+                      Delete
                     </button>
                   </td>
 
@@ -450,7 +454,7 @@ export default function ExpensesPage() {
           <button
             disabled={page === 1}
             onClick={() => setPage(p => p - 1)}
-            className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
+            className="px-4 py-2 text-xs font-black rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-900 disabled:opacity-50 transition-all uppercase"
           >
             Previous
           </button>
@@ -460,7 +464,7 @@ export default function ExpensesPage() {
           <button
             disabled={page === totalPages}
             onClick={() => setPage(p => p + 1)}
-            className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
+            className="px-4 py-2 text-xs font-black rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-900 disabled:opacity-50 transition-all uppercase"
           >
             Next
           </button>

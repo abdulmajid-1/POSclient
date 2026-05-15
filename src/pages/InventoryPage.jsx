@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/productService';
 import { getSuppliers, createSupplier } from "../services/supplierService";
 import { getCategories, createCategory } from "../services/categoryService";
-import { MdAdd, MdEdit, MdDelete, MdSearch, MdClose, MdInventory2 } from 'react-icons/md';
+import { MdAdd, MdSearch, MdClose, MdInventory2 } from 'react-icons/md';
 import toast from 'react-hot-toast';
 
 const CATEGORIES = ['Electronics', 'Stationery', 'Hardware', 'Other'];
@@ -421,19 +421,19 @@ export default function InventoryPage() {
                     </td>
 
                     <td>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => setModal(p)}
-                          className="p-1.5 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors text-slate-400"
+                          className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all font-bold text-xs"
                         >
-                          <MdEdit size={16} />
+                          Edit
                         </button>
 
                         <button
                           onClick={() => handleDelete(p._id, p.name)}
-                          className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors text-slate-400"
+                          className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-bold text-xs"
                         >
-                          <MdDelete size={16} />
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -451,7 +451,7 @@ export default function InventoryPage() {
           <button
             disabled={page === 1}
             onClick={() => setPage(p => p - 1)}
-            className="btn-secondary text-xs text-black font-bold disabled:opacity-50"
+            className="px-4 py-2 text-xs font-black rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-900 disabled:opacity-50 transition-all uppercase"
           >
             Previous
           </button>
@@ -461,7 +461,7 @@ export default function InventoryPage() {
           <button
             disabled={page === totalPages}
             onClick={() => setPage(p => p + 1)}
-            className="btn-secondary text-xs disabled:opacity-50"
+            className="px-4 py-2 text-xs font-black rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-900 disabled:opacity-50 transition-all uppercase"
           >
             Next
           </button>

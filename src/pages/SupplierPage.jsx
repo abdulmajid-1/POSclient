@@ -6,6 +6,8 @@ import {
     updateSupplier,
     deleteSupplier,
     addSupplierPurchase,
+    updateSupplierPayment,
+    getSupplierPayments
 } from '../services/supplierService';
 
 import {
@@ -15,253 +17,203 @@ import {
     MdClose,
     MdEdit,
     MdDelete,
+    MdHistory,
+    MdPayments,
+    MdShoppingBag,
 } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
+import { createPurchase } from '../services/purchaseService';
 
 import toast from 'react-hot-toast';
 
 const formatSAR = (n) =>
     `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
-/* =========================================
-   SUPPLIER DETAILS MODAL
-========================================= */
-function SupplierDetailsModal({ supplier, onClose }) {
+function RecordPurchaseModal({ supplier, onClose, onSaved }) {
+    const [form, setForm] = useState({ 
+        amount: '', 
+        paidAmount: '0', 
+        totalItems: '',
+        notes: '', 
+        date: new Date().toISOString().split('T')[0] 
+    });
+    const [loading, setLoading] = useState(false);
 
-    if (!supplier) return null;
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!form.amount || Number(form.amount) <= 0) return toast.error('Enter a valid amount');
+        
+        setLoading(true);
+        try {
+            // We create a purchase record with no items, just the total
+                await createPurchase({
+                    supplierId: supplier._id,
+                    items: [], // No products, just the financial record
+                    subtotal: Number(form.amount),
+                    tax: 0,
+                    total: Number(form.amount),
+                    totalItems: Number(form.totalItems || 0),
+                    notes: form.notes,
+                    date: form.date,
+                    status: 'received'
+                });
+
+            // If they paid something during purchase, we record that too
+            if (Number(form.paidAmount) > 0) {
+                await updateSupplierPayment(supplier._id, {
+                    amount: Number(form.paidAmount),
+                    paymentMethod: 'cash',
+                    notes: 'Paid during purchase',
+                    date: form.date
+                });
+            }
+
+            toast.success('Purchase recorded');
+            onSaved();
+            onClose();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to record purchase');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <div
-            className="modal-overlay"
-            onClick={(e) =>
-                e.target === e.currentTarget && onClose()
-            }
-        >
-            <div className="modal-box max-w-md w-full p-5">
-
-                <div className="flex justify-between items-center mb-4">
-
-                    <h2 className="font-bold text-slate-800">
-                        Supplier Details
-                    </h2>
-
-                    <button
-                        onClick={onClose}
-                        className="text-slate-500"
-                    >
-                        <MdClose size={18} />
-                    </button>
-
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div className="modal-box max-w-md w-full p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-slate-800">New Purchase - {supplier.name}</h2>
+                    <button onClick={onClose} className="text-slate-500 hover:text-slate-800"><MdClose size={24} /></button>
                 </div>
 
-                <div className="space-y-3 text-sm">
-
-                    <div>
-                        <p className="text-slate-400 text-xs">
-                            Name
-                        </p>
-
-                        <p className="font-semibold">
-                            {supplier.name}
-                        </p>
-                    </div>
-
-                    <div>
-                        <p className="text-slate-400 text-xs">
-                            Company
-                        </p>
-
-                        <p className="font-medium">
-                            {supplier.company || '-'}
-                        </p>
-                    </div>
-
-                    <div>
-                        <p className="text-slate-400 text-xs">
-                            Phone
-                        </p>
-
-                        <p>{supplier.phone || '-'}</p>
-                    </div>
-
-                    <div>
-                        <p className="text-slate-400 text-xs">
-                            Email
-                        </p>
-
-                        <p>{supplier.email || '-'}</p>
-                    </div>
-
-                    <hr />
-
-                    <div className="flex justify-between">
-                        <span>Total Purchases</span>
-
-                        <span className="font-semibold text-slate-800">
-                            {formatSAR(supplier.totalPurchases)}
-                        </span>
-                    </div>
-
-                    <div className="flex justify-between">
-                        <span>Total Paid</span>
-
-                        <span className="font-semibold text-green-600">
-                            {formatSAR(supplier.totalPaid)}
-                        </span>
-                    </div>
-
-                    <div className="flex justify-between border-t pt-2 font-bold">
-
-                        <span>Remaining</span>
-
-                        <span className="text-primary-600">
-                            {formatSAR(
-                                (supplier.totalPurchases || 0) -
-                                (supplier.totalPaid || 0)
-                            )}
-                        </span>
-
-                    </div>
-
-                    {supplier.address && (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <p className="text-slate-400 text-xs">
-                                Address
-                            </p>
-
-                            <p>{supplier.address}</p>
+                            <label className="label text-xs font-bold uppercase text-slate-500">Purchase Amount</label>
+                            <input 
+                                type="number" 
+                                className="input font-bold text-lg" 
+                                placeholder="0.00"
+                                required 
+                                value={form.amount} 
+                                onChange={e => setForm({ ...form, amount: e.target.value })} 
+                            />
                         </div>
-                    )}
+                        <div>
+                            <label className="label text-xs font-bold uppercase text-slate-500">Total Items (Optional)</label>
+                            <input 
+                                type="number" 
+                                className="input font-bold" 
+                                placeholder="0"
+                                value={form.totalItems} 
+                                onChange={e => setForm({ ...form, totalItems: e.target.value })} 
+                            />
+                        </div>
+                    </div>
 
-                </div>
+                    <div>
+                        <label className="label text-xs font-bold uppercase text-slate-500">Date</label>
+                        <input 
+                            type="date" 
+                            className="input" 
+                            value={form.date} 
+                            onChange={e => setForm({ ...form, date: e.target.value })} 
+                        />
+                    </div>
+
+                    <div>
+                        <label className="label text-xs font-bold uppercase text-slate-500">Amount Paid (Optional)</label>
+                        <input 
+                            type="number" 
+                            className="input font-bold text-emerald-600" 
+                            placeholder="0.00"
+                            value={form.paidAmount} 
+                            onChange={e => setForm({ ...form, paidAmount: e.target.value })} 
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">Leave 0 if this is a credit purchase</p>
+                    </div>
+
+                    <div>
+                        <label className="label text-xs font-bold uppercase text-slate-500">Notes</label>
+                        <textarea 
+                            className="input min-h-[80px]" 
+                            placeholder="Invoice number, items bought, etc."
+                            value={form.notes} 
+                            onChange={e => setForm({ ...form, notes: e.target.value })} 
+                        />
+                    </div>
+
+                    <div className="bg-slate-50 rounded-xl p-4 space-y-2 border border-slate-200">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-500">Remaining Balance</span>
+                            <span className="font-bold text-primary-600">
+                                {formatSAR(Number(form.amount || 0) - Number(form.paidAmount || 0))}
+                            </span>
+                        </div>
+                    </div>
+
+                    <button 
+                        disabled={loading} 
+                        className="btn-primary w-full justify-center h-12 text-lg"
+                    >
+                        {loading ? 'Processing...' : 'Save Purchase Record'}
+                    </button>
+                </form>
             </div>
         </div>
     );
 }
 
-function AddPurchaseModal({ supplier, onClose, onSubmit }) {
-    const [purchaseAmount, setPurchaseAmount] = useState('');
-    const [paidAmount, setPaidAmount] = useState('');
+function AddPaymentModal({ supplier, onClose, onSaved }) {
+    const [form, setForm] = useState({ amount: '', paymentMethod: 'cash', referenceNumber: '', notes: '', date: new Date().toISOString().split('T')[0] });
+    const [loading, setLoading] = useState(false);
 
-    const remaining =
-        Number(purchaseAmount || 0) - Number(paidAmount || 0);
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
-        onSubmit({
-            purchaseAmount: Number(purchaseAmount),
-            paidAmount: Number(paidAmount),
-        });
+        if (!form.amount || Number(form.amount) <= 0) return toast.error('Enter a valid amount');
+        setLoading(true);
+        try {
+            await updateSupplierPayment(supplier._id, form);
+            toast.success('Payment recorded');
+            onSaved();
+            onClose();
+        } catch {
+            toast.error('Failed to record payment');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div
-            className="modal-overlay"
-            onClick={(e) =>
-                e.target === e.currentTarget && onClose()
-            }
-        >
-            <div className="modal-box max-w-md w-full p-5">
-
-                {/* HEADER */}
-                <div className="flex justify-between items-center mb-5">
-                    <div>
-                        <h2 className="font-bold text-slate-800 text-lg">
-                            Add Purchase
-                        </h2>
-
-                        <p className="text-xs text-slate-400">
-                            {supplier?.name}
-                        </p>
-                    </div>
-
-                    <button
-                        onClick={onClose}
-                        className="text-slate-500 hover:text-red-500"
-                    >
-                        <MdClose size={20} />
-                    </button>
-                </div>
-
-                {/* FORM */}
-                <form
-                    onSubmit={handleSubmit}
-                    className="space-y-4"
-                >
-
-                    {/* PURCHASE */}
-                    <div>
-                        <label className="label text-xs">
-                            Purchase Amount
-                        </label>
-
-                        <input
-                            type="number"
-                            min={0}
-                            required
-                            value={purchaseAmount}
-                            onChange={(e) =>
-                                setPurchaseAmount(e.target.value)
-                            }
-                            className="input"
-                            placeholder="Enter purchase amount"
-                        />
-                    </div>
-
-                    {/* PAID */}
-                    <div>
-                        <label className="label text-xs">
-                            Paid Amount
-                        </label>
-
-                        <input
-                            type="number"
-                            min={0}
-                            required
-                            value={paidAmount}
-                            onChange={(e) =>
-                                setPaidAmount(e.target.value)
-                            }
-                            className="input"
-                            placeholder="Enter paid amount"
-                        />
-                    </div>
-
-                    {/* REMAINING */}
-                    <div className="bg-slate-50 rounded-xl p-4">
-
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-500">
-                                Remaining Amount
-                            </span>
-
-                            <span className="font-bold text-primary-600">
-                                {formatSAR(remaining)}
-                            </span>
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div className="modal-box max-w-md w-full p-6">
+                <h2 className="text-xl font-bold mb-4">Add Payment - {supplier.name}</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="label">Amount</label>
+                            <input type="number" className="input" required value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
                         </div>
-
+                        <div>
+                            <label className="label">Date</label>
+                            <input type="date" className="input" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
+                        </div>
                     </div>
-
-                    {/* BUTTONS */}
-                    <div className="flex justify-end gap-2 pt-2">
-
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="btn-secondary"
-                        >
-                            Cancel
-                        </button>
-
-                        <button
-                            type="submit"
-                            className="btn-primary"
-                        >
-                            Save Purchase
-                        </button>
-
+                    <div>
+                        <label className="label">Payment Method</label>
+                        <select className="input" value={form.paymentMethod} onChange={e => setForm({ ...form, paymentMethod: e.target.value })}>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="check">Check</option>
+                        </select>
                     </div>
-
+                    <div>
+                        <label className="label">Ref #</label>
+                        <input className="input" placeholder="Ref/Transaction ID" value={form.referenceNumber} onChange={e => setForm({ ...form, referenceNumber: e.target.value })} />
+                    </div>
+                    <textarea className="input" placeholder="Notes" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+                    <button disabled={loading} className="btn-primary w-full justify-center">{loading ? 'Processing...' : 'Record Payment'}</button>
                 </form>
             </div>
         </div>
@@ -629,16 +581,15 @@ function UpdateSupplierModal({
 ========================================= */
 export default function SupplierPage() {
 
+    const navigate = useNavigate();
     const [suppliers, setSuppliers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [purchaseSupplier, setPurchaseSupplier] = useState(null);
 
     const [search, setSearch] = useState('');
-
-    const [selectedSupplier, setSelectedSupplier] =
-        useState(null);
 
     const [showAddModal, setShowAddModal] =
         useState(false);
@@ -810,8 +761,13 @@ export default function SupplierPage() {
 
                                 <tr key={s._id}>
 
-                                    <td className="font-medium">
-                                        {s.name}
+                                    <td className="font-bold">
+                                        <button 
+                                            onClick={() => navigate(`/suppliers/${s._id}/history`)}
+                                            className="hover:text-primary-600 transition-colors text-left"
+                                        >
+                                            {s.name}
+                                        </button>
                                     </td>
 
                                     <td>
@@ -838,51 +794,56 @@ export default function SupplierPage() {
                                     </td>
 
                                     <td>
-
-                                        <div className="flex items-center gap-1">
-
-                                            {/* VIEW */}
-                                            <button
-                                                onClick={() =>
-                                                    setSelectedSupplier(s)
-                                                }
-                                                className="p-1.5 rounded hover:bg-primary-50 text-slate-500 hover:text-primary-600"
-                                            >
-                                                <MdVisibility size={16} />
-                                            </button>
-
-                                            {/* EDIT */}
-                                            <button
-                                                onClick={() =>
-                                                    setEditingSupplier(s)
-                                                }
-                                                className="p-1.5 rounded hover:bg-amber-50 text-slate-500 hover:text-amber-600"
-                                            >
-                                                <MdEdit size={16} />
-                                            </button>
-
-                                            {/* DELETE */}
-                                            <button
-                                                onClick={() =>
-                                                    handleDeleteSupplier(s._id)
-                                                }
-                                                className="p-1.5 rounded hover:bg-red-50 text-slate-500 hover:text-red-600"
-                                            >
-                                                <MdDelete size={16} />
-                                            </button>
-                                            <button
+                                        <div className="flex flex-wrap items-center gap-2 py-2">
+                                            <button 
                                                 onClick={() => {
                                                     setPurchaseSupplier(s);
                                                     setShowPurchaseModal(true);
                                                 }}
-                                                className="p-1.5 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition"
-                                                title="Add Purchase"
+                                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-sm font-bold text-sm"
+                                                title="New Purchase"
                                             >
-                                                +
+                                                <MdAdd size={20} />
+                                                <span>New Purchase</span>
                                             </button>
 
-                                        </div>
+                                            <button 
+                                                onClick={() => {
+                                                    setPurchaseSupplier(s);
+                                                    setShowPaymentModal(true);
+                                                }}
+                                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-sm font-bold text-sm"
+                                                title="Add Payment"
+                                            >
+                                                <MdPayments size={20} />
+                                                <span>Add Payment</span>
+                                            </button>
 
+                                            <button 
+                                                onClick={() => navigate(`/suppliers/${s._id}/history`)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition-all shadow-sm font-bold text-sm"
+                                                title="History"
+                                            >
+                                                <MdHistory size={20} />
+                                                <span>History</span>
+                                            </button>
+
+                                            <div className="flex gap-2 ml-auto">
+                                                <button
+                                                    onClick={() => setEditingSupplier(s)}
+                                                    className="px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all shadow-sm font-bold text-sm"
+                                                >
+                                                    Edit
+                                                </button>
+
+                                                <button
+                                                    onClick={() => handleDeleteSupplier(s._id)}
+                                                    className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-sm font-bold text-sm"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
                                     </td>
 
                                 </tr>
@@ -897,46 +858,44 @@ export default function SupplierPage() {
 
             </div>
 
-            {/* DETAILS MODAL */}
-            {selectedSupplier && (
-                <SupplierDetailsModal
-                    supplier={selectedSupplier}
-                    onClose={() =>
-                        setSelectedSupplier(null)
-                    }
-                />
-            )}
-
-            {/* ADD MODAL */}
+            {/* MODALS */}
             {showAddModal && (
                 <AddSupplierModal
-                    onClose={() =>
-                        setShowAddModal(false)
-                    }
+                    onClose={() => setShowAddModal(false)}
                     onCreated={fetchSuppliers}
                 />
             )}
 
-            {/* UPDATE MODAL */}
             {editingSupplier && (
                 <UpdateSupplierModal
                     supplier={editingSupplier}
-                    onClose={() =>
-                        setEditingSupplier(null)
-                    }
+                    onClose={() => setEditingSupplier(null)}
                     onUpdated={fetchSuppliers}
                 />
             )}
 
             {showPurchaseModal && (
-                <AddPurchaseModal
+                <RecordPurchaseModal
                     supplier={purchaseSupplier}
-                    onClose={() => setShowPurchaseModal(false)}
-                    onSubmit={handleAddPurchase}
+                    onClose={() => {
+                        setShowPurchaseModal(false);
+                        setPurchaseSupplier(null);
+                    }}
+                    onSaved={fetchSuppliers}
+                />
+            )}
+
+            {showPaymentModal && (
+                <AddPaymentModal
+                    supplier={purchaseSupplier}
+                    onClose={() => {
+                        setShowPaymentModal(false);
+                        setPurchaseSupplier(null);
+                    }}
+                    onSaved={fetchSuppliers}
                 />
             )}
 
         </div>
     );
 }
-

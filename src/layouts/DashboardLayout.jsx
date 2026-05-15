@@ -3,6 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import MonthlyAlert from '../components/MonthlyAlert';
 
 export default function DashboardLayout() {
   const { isAuthenticated, loading } = useAuth();
@@ -23,6 +24,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
+      <MonthlyAlert />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Navbar onMenuToggle={() => setSidebarOpen((prev) => !prev)} />

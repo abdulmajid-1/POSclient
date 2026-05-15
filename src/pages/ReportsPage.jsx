@@ -9,15 +9,41 @@ const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
 export default function ReportsPage() {
   const [tab, setTab] = useState('sales');
+  const [rangeType, setRangeType] = useState('monthly');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const inventoryLimit = 20;
+
+  const calculateDates = (type) => {
+    const end = new Date();
+    let start = new Date();
+
+    if (type === 'daily') {
+      start.setHours(0, 0, 0, 0);
+    } else if (type === 'weekly') {
+      start.setDate(end.getDate() - 7);
+    } else if (type === 'monthly') {
+      start.setDate(end.getDate() - 30);
+    } else if (type === 'yearly') {
+      start.setDate(end.getDate() - 365);
+    } else if (type === 'custom') {
+      return { start: startDate, end: endDate };
+    }
+
+    return {
+      start: start.toISOString().split('T')[0],
+      end: end.toISOString().split('T')[0]
+    };
+  };
 
   const fetchReport = async () => {
     setLoading(true);
     try {
-      const params = { startDate, endDate };
+      const { start, end } = calculateDates(rangeType);
+      const params = { startDate: start, endDate: end };
       let res;
       if (tab === 'sales') res = await getSalesReport(params);
       else if (tab === 'expenses') res = await getExpenseReport(params);
@@ -27,13 +53,24 @@ export default function ReportsPage() {
     } catch { toast.error('Failed to load report'); } finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchReport(); }, [tab]);
+  useEffect(() => {
+    fetchReport();
+    if (tab === 'inventory') setInventoryPage(1);
+  }, [tab, rangeType]);
 
   const tabs = [
     { key: 'sales', label: 'Sales Report' },
     { key: 'expenses', label: 'Expense Report' },
     { key: 'profit', label: 'Profit Report' },
     { key: 'inventory', label: 'Inventory Report' },
+  ];
+
+  const ranges = [
+    { key: 'daily', label: 'Daily' },
+    { key: 'weekly', label: 'Weekly' },
+    { key: 'monthly', label: 'Monthly' },
+    { key: 'yearly', label: 'Yearly' },
+    { key: 'custom', label: 'Custom' },
   ];
 
   return (
@@ -47,18 +84,34 @@ export default function ReportsPage() {
       <div className="flex gap-2 flex-wrap">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${tab === t.key ? 'bg-primary-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-primary-300'}`}>
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${tab === t.key ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'}`}>
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* Date Filter */}
+      {/* Range Selector */}
       {tab !== 'inventory' && (
-        <div className="card p-4 flex flex-col sm:flex-row gap-3 items-end">
-          <div className="flex-1"><label className="label">From Date</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input" /></div>
-          <div className="flex-1"><label className="label">To Date</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="input" /></div>
-          <button onClick={fetchReport} className="btn-primary shrink-0">Apply Filter</button>
+        <div className="space-y-4">
+          <div className="flex gap-2 flex-wrap bg-slate-100 p-1 rounded-2xl w-fit">
+            {ranges.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setRangeType(r.key)}
+                className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${rangeType === r.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+
+          {rangeType === 'custom' && (
+            <div className="card p-4 flex flex-col sm:flex-row gap-3 items-end animate-slide-down">
+              <div className="flex-1"><label className="label text-[10px] font-black uppercase text-slate-400">From Date</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input" /></div>
+              <div className="flex-1"><label className="label text-[10px] font-black uppercase text-slate-400">To Date</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="input" /></div>
+              <button onClick={fetchReport} className="btn-primary shrink-0 px-8">Apply</button>
+            </div>
+          )}
         </div>
       )}
 
@@ -82,20 +135,7 @@ export default function ReportsPage() {
                   </div>
                 ))}
               </div>
-              {data.byDay?.length > 0 && (
-                <div className="card">
-                  <h3 className="font-semibold text-slate-800 mb-4">Daily Revenue</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={data.byDay} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="_id" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                      <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                      <Tooltip formatter={(v) => [formatSAR(v), 'Revenue']} />
-                      <Bar dataKey="revenue" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
+
             </div>
           )}
 
@@ -180,19 +220,48 @@ export default function ReportsPage() {
                 <div className="table-wrapper">
                   <table className="table">
                     <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Stock</th><th>Purchase Price</th><th>Sale Price</th><th>Stock Value</th></tr></thead>
-                    <tbody>{data.products?.slice(0, 50).map((p) => (
-                      <tr key={p._id}>
-                        <td className="font-medium text-slate-700">{p.name}</td>
-                        <td><span className="badge-blue">{p.sku}</span></td>
-                        <td><span className="badge-gray">{p.category}</span></td>
-                        <td><span className={p.quantity <= p.lowStockThreshold ? 'badge-red' : 'badge-green'}>{p.quantity}</span></td>
-                        <td>SAR {Number(p.purchasePrice).toLocaleString()}</td>
-                        <td>SAR {Number(p.salePrice).toLocaleString()}</td>
-                        <td className="font-semibold">SAR {Number(p.purchasePrice * p.quantity).toLocaleString()}</td>
-                      </tr>
-                    ))}</tbody>
+                    <tbody>
+                      {(() => {
+                        const start = (inventoryPage - 1) * inventoryLimit;
+                        const end = start + inventoryLimit;
+                        return data.products?.slice(start, end).map((p) => (
+                          <tr key={p._id}>
+                            <td className="font-bold text-slate-900">{p.name}</td>
+                            <td><span className="badge-blue font-bold">{p.sku}</span></td>
+                            <td><span className="badge-gray font-bold">{p.category}</span></td>
+                            <td><span className={`font-bold ${p.quantity <= p.lowStockThreshold ? 'badge-red' : 'badge-green'}`}>{p.quantity}</span></td>
+                            <td className="text-slate-900 font-medium">SAR {Number(p.purchasePrice).toLocaleString()}</td>
+                            <td className="text-slate-900 font-medium">SAR {Number(p.salePrice).toLocaleString()}</td>
+                            <td className="font-extrabold text-slate-950">SAR {Number(p.purchasePrice * p.quantity).toLocaleString()}</td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {data.products?.length > inventoryLimit && (
+                  <div className="flex items-center justify-between p-4 border-t bg-slate-50/30">
+                    <button
+                      disabled={inventoryPage === 1}
+                      onClick={() => setInventoryPage(p => p - 1)}
+                      className="px-4 py-2 text-xs font-black rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-900 disabled:opacity-50 transition-all uppercase"
+                    >
+                      Previous
+                    </button>
+                    <div className="text-xs font-bold text-slate-600">
+                      Page {inventoryPage} of {Math.ceil(data.products.length / inventoryLimit)}
+                    </div>
+                    <button
+                      disabled={inventoryPage === Math.ceil(data.products.length / inventoryLimit)}
+                      onClick={() => setInventoryPage(p => p + 1)}
+                      className="px-4 py-2 text-xs font-black rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-900 disabled:opacity-50 transition-all uppercase"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

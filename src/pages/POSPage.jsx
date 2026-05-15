@@ -417,11 +417,11 @@ export default function POSPage() {
               <div className="w-full h-20 bg-slate-100 rounded-lg flex items-center justify-center mb-2 text-slate-300">
                 <MdShoppingCart size={28} />
               </div>
-              <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
-              <p className="text-xs text-slate-400 truncate">{p.sku}</p>
-              <p className="text-sm font-bold text-primary-600 mt-1">SAR {Number(p.salePrice).toLocaleString()}</p>
-              <p className="text-[10px] text-slate-400 font-medium">Purchase: SAR {Number(p.purchasePrice || 0).toLocaleString()}</p>
-              <p className={`text-xs mt-0.5 ${p.quantity <= p.lowStockThreshold ? 'text-amber-500' : 'text-slate-400'}`}>
+              <p className="text-xs font-bold text-slate-900 truncate">{p.name}</p>
+              <p className="text-[10px] font-bold text-blue-600 truncate">{p.sku}</p>
+              <p className="text-sm font-black text-primary-600 mt-1">SAR {Number(p.salePrice).toLocaleString()}</p>
+              <p className="text-[11px] text-slate-900 font-bold">Cost: SAR {Number(p.purchasePrice || 0).toLocaleString()}</p>
+              <p className={`text-xs mt-0.5 font-black ${p.quantity <= p.lowStockThreshold ? 'text-red-600' : 'text-emerald-700'}`}>
                 {p.quantity} in stock
               </p>
             </button>

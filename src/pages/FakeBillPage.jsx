@@ -301,14 +301,17 @@ export default function FakeBillPage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
           {products.map((p) => (
-            <button key={p._id} onClick={() => addToCart(p)} className="p-3 text-left rounded-xl border border-slate-100 bg-white hover:border-primary-200 hover:bg-primary-50 transition-all duration-200 shadow-sm hover:shadow-md">
+            <button key={p._id} onClick={() => addToCart(p)} className="p-3 text-left rounded-xl border border-slate-100 bg-white transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 hover:border-primary-200 hover:bg-primary-50">
               <div className="w-full h-20 bg-slate-100 rounded-lg flex items-center justify-center mb-2 text-slate-300">
                 <MdShoppingCart size={28} />
               </div>
-              <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
-              <p className="text-xs text-slate-400 truncate">{p.sku}</p>
-              <p className="text-sm font-bold text-primary-600 mt-1">SAR {Number(p.salePrice).toLocaleString()}</p>
-              <p className="text-[10px] text-slate-400 font-medium">Purchase: SAR {Number(p.purchasePrice || 0).toLocaleString()}</p>
+              <p className="text-xs font-bold text-slate-900 truncate">{p.name}</p>
+              <p className="text-[10px] font-bold text-blue-600 truncate">{p.sku}</p>
+              <p className="text-sm font-black text-primary-600 mt-1">SAR {Number(p.salePrice).toLocaleString()}</p>
+              <p className="text-[11px] text-slate-900 font-bold">Cost: SAR {Number(p.purchasePrice || 0).toLocaleString()}</p>
+              <p className="text-xs mt-0.5 font-black text-emerald-700">
+                {p.quantity} in stock
+              </p>
             </button>
           ))}
           {products.length === 0 && <p className="col-span-full text-center text-slate-400 py-12">No products found</p>}

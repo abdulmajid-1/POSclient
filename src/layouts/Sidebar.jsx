@@ -14,7 +14,7 @@ const navItems = [
   { to: '/expenses', label: 'Expenses', icon: MdMoneyOff },
   { to: '/returns', label: 'Returns', icon: MdKeyboardReturn },
   { to: '/reports', label: 'Reports', icon: MdAssessment },
-  { to: '/fake-bill', label: 'Fake Bill', icon: MdReceipt },
+  // { to: '/fake-bill', label: 'Fake Bill', icon: MdReceipt },
   { to: '/settings', label: 'Settings', icon: MdSettings },
 ];
 

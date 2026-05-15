@@ -13,6 +13,7 @@ import ReturnsPage from './pages/ReturnsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import SupplierPage from './pages/SupplierPage';
+import SupplierPurchaseHistoryPage from './pages/SupplierPurchaseHistoryPage';
 import FakeBillPage from './pages/FakeBillPage';
 
 export default function App() {
@@ -31,10 +32,11 @@ export default function App() {
               <Route path="/pos" element={<POSPage />} />
               <Route path="/sales" element={<SalesPage />} />
               <Route path="/suppliers" element={<SupplierPage />} />
+              <Route path="/suppliers/:id/history" element={<SupplierPurchaseHistoryPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/returns" element={<ReturnsPage />} />
               <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/fake-bill" element={<FakeBillPage />} />
+              {/* <Route path="/fake-bill" element={<FakeBillPage />} /> */}
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
 

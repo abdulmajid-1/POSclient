@@ -27,17 +27,39 @@ export default function Dashboard() {
   const [weeklyData, setWeeklyData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rangeType, setRangeType] = useState('daily');
+
+  const calculateDates = (type) => {
+    const end = new Date();
+    let start = new Date();
+
+    if (type === 'daily') {
+      start.setHours(0, 0, 0, 0);
+    } else if (type === 'weekly') {
+      start.setDate(end.getDate() - 7);
+    } else if (type === 'monthly') {
+      start.setDate(end.getDate() - 30);
+    } else if (type === 'yearly') {
+      start.setDate(end.getDate() - 365);
+    }
+
+    return {
+      startDate: start.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0]
+    };
+  };
 
   useEffect(() => {
     const fetchAll = async () => {
+      setLoading(true);
       try {
+        const dates = calculateDates(rangeType);
         const [dashRes, weekRes, monthRes] = await Promise.all([
-          getDashboardStats(),
+          getDashboardStats(dates),
           getWeeklySummary(),
           getMonthlySummary(),
         ]);
         setStats(dashRes.data);
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         setWeeklyData(weekRes.data.data.map((d) => ({ ...d, name: d._id ? new Date(d._id).toLocaleDateString('en', { weekday: 'short' }) : d._id })));
         setMonthlyData(monthRes.data.data);
       } catch {
@@ -47,7 +69,7 @@ export default function Dashboard() {
       }
     };
     fetchAll();
-  }, []);
+  }, [rangeType]);
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -58,20 +80,42 @@ export default function Dashboard() {
   const s = stats?.stats || {};
 
   const cards = [
-    { title: "Today's Sales", value: s.todaySales?.count || 0, icon: MdShoppingCart, color: 'bg-primary-600', sub: `Total: ${s.totalSales} all time` },
-    { title: "Today's Revenue", value: formatSAR(s.todaySales?.total), icon: MdAttachMoney, color: 'bg-emerald-500', sub: `Monthly: ${formatSAR(s.monthSales?.total)}` },
+    { title: "Sales", value: s.rangeSales?.count || 0, icon: MdShoppingCart, color: 'bg-primary-600', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} count` },
+    { title: "Revenue", value: formatSAR(s.rangeSales?.total), icon: MdAttachMoney, color: 'bg-emerald-500', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} total` },
     { title: 'Total Products', value: s.productCount || 0, icon: MdInventory2, color: 'bg-violet-500', sub: `${s.lowStockCount || 0} low stock` },
-    { title: 'Total Expenses', value: formatSAR(s.totalExpenses), icon: MdMoneyOff, color: 'bg-amber-500', sub: `Monthly: ${formatSAR(s.monthExpenses)}` },
-    { title: 'Net Profit', value: formatSAR(s.totalProfit), icon: MdTrendingUp, color: s.totalProfit >= 0 ? 'bg-teal-500' : 'bg-red-500', sub: 'Revenue - Expenses - Returns' },
-    { title: 'Total Returns', value: s.totalReturns || 0, icon: MdKeyboardReturn, color: 'bg-rose-500', sub: formatSAR(s.totalReturnAmount) },
+    { title: 'Expenses', value: formatSAR(s.rangeExpenses), icon: MdMoneyOff, color: 'bg-amber-500', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} total` },
+    { title: 'Net Profit', value: formatSAR(s.rangeProfit), icon: MdTrendingUp, color: s.rangeProfit >= 0 ? 'bg-teal-500' : 'bg-red-500', sub: 'Revenue - Expenses - Returns' },
+    { title: 'Returns', value: s.rangeReturns?.count || 0, icon: MdKeyboardReturn, color: 'bg-rose-500', sub: formatSAR(s.rangeReturns?.total) },
+  ];
+
+  const ranges = [
+    { key: 'daily', label: 'Daily' },
+    { key: 'weekly', label: 'Weekly' },
+    { key: 'monthly', label: 'Monthly' },
+    { key: 'yearly', label: 'Yearly' },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-        <p className="text-slate-500 text-sm mt-1">Welcome back! Here's what's happening today.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-1">Business performance overview.</p>
+        </div>
+
+        {/* Range Selector */}
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit border border-slate-200">
+          {ranges.map((r) => (
+            <button 
+              key={r.key} 
+              onClick={() => setRangeType(r.key)}
+              className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${rangeType === r.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Stat Cards */}
