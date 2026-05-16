@@ -447,18 +447,17 @@ function ReturnModal({ onClose, onSaved }) {
               </div>
 
               {/* REFUND */}
-              <div className="text-sm font-medium text-right text-primary-600">
-
-                Refund: SAR{' '}
-                {selectedItems
-                  .reduce(
-                    (s, i) =>
-                      s +
-                      i.quantity * i.unitPrice,
-                    0
-                  )
-                  .toLocaleString()}
-
+              <div className="text-sm font-medium text-right text-primary-600 bg-primary-50 p-3 rounded-lg border border-primary-100">
+                <p className="text-[10px] uppercase font-bold text-primary-400">Total Refund (Inc. 15% Tax)</p>
+                <p className="text-lg font-black">
+                  SAR{' '}
+                  {(
+                    selectedItems.reduce(
+                      (s, i) => s + i.quantity * i.unitPrice,
+                      0
+                    ) * 1.15
+                  ).toLocaleString()}
+                </p>
               </div>
 
               {/* BUTTONS */}

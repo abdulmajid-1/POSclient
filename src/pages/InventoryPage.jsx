@@ -15,7 +15,16 @@ function ProductModal({ product, onClose, onSaved }) {
   const [newSupplier, setNewSupplier] = useState("");
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
-  const [form, setForm] = useState(product || EMPTY_FORM);
+  const [form, setForm] = useState(() => {
+    if (product) {
+      return {
+        ...product,
+        category: product.category?._id || product.category || '',
+        supplier: product.supplier?._id || product.supplier || '',
+      };
+    }
+    return EMPTY_FORM;
+  });
   const [loading, setLoading] = useState(false);
   const isEdit = !!product?._id;
 

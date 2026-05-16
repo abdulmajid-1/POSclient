@@ -237,43 +237,43 @@ function SaleDetailModal({ saleId, onClose }) {
                   <span>{formatSAR(sale.subtotal)}</span>
                 </div>
 
-                  <div className="flex justify-between font-bold border-t pt-2">
-                    <span>Total / الإجمالي</span>
-                    <span className="text-primary-600">
-                      {formatSAR(sale.total)}
-                    </span>
+                <div className="flex justify-between font-bold border-t pt-2">
+                  <span>Total / الإجمالي</span>
+                  <span className="text-primary-600">
+                    {formatSAR(sale.total)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between pt-1">
+                  <span>VAT / الضريبة</span>
+                  <span>{formatSAR(sale.tax)}</span>
+                </div>
+
+                {sale.discount > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Discount on Subtotal Bill / خصم الفاتورة الفرعي</span>
+                    <span>- {formatSAR(sale.discount)}</span>
                   </div>
+                )}
 
-                  <div className="flex justify-between pt-1">
-                    <span>VAT / الضريبة</span>
-                    <span>{formatSAR(sale.tax)}</span>
-                  </div>
+                {(() => {
+                  const itemDiscSum = sale.items.reduce((acc, item) => {
+                    const base = item.unitPrice * item.quantity;
+                    const d = item.discountType === 'percentage' ? (base * item.discount) / 100 : item.discount;
+                    return acc + (Number(d) || 0);
+                  }, 0);
+                  const totalDisc = itemDiscSum + (Number(sale.discount) || 0);
 
-                  {sale.discount > 0 && (
-                    <div className="flex justify-between text-slate-600">
-                      <span>Discount on Subtotal Bill / خصم الفاتورة الفرعي</span>
-                      <span>- {formatSAR(sale.discount)}</span>
-                    </div>
-                  )}
-
-                  {(() => {
-                    const itemDiscSum = sale.items.reduce((acc, item) => {
-                      const base = item.unitPrice * item.quantity;
-                      const d = item.discountType === 'percentage' ? (base * item.discount) / 100 : item.discount;
-                      return acc + (Number(d) || 0);
-                    }, 0);
-                    const totalDisc = itemDiscSum + (Number(sale.discount) || 0);
-                    
-                    if (totalDisc > 0) {
-                      return (
-                        <div className="flex justify-between text-red-600 font-bold border-t border-dashed pt-2 mt-2">
-                          <span>Total Discount Given / إجمالي الخصم</span>
-                          <span>- {formatSAR(totalDisc)}</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
+                  if (totalDisc > 0) {
+                    return (
+                      <div className="flex justify-between text-red-600 font-bold border-t border-dashed pt-2 mt-2">
+                        <span>Total Discount Given / إجمالي الخصم</span>
+                        <span>- {formatSAR(totalDisc)}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
               </div>
             </div>
@@ -299,24 +299,34 @@ export default function SalesPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const calculateDates = (type) => {
-    const end = new Date();
+    const now = new Date();
     let start = new Date();
+    let end = new Date();
 
     if (type === 'daily') {
       start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
     } else if (type === 'weekly') {
-      start.setDate(end.getDate() - 7);
+      start.setDate(now.getDate() - 7);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
     } else if (type === 'monthly') {
-      start.setDate(end.getDate() - 30);
+      start.setDate(now.getDate() - 30);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
     } else if (type === 'yearly') {
-      start.setDate(end.getDate() - 365);
+      start.setDate(now.getDate() - 365);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
     } else if (type === 'custom') {
-      return { start: startDate, end: endDate };
+      const s = new Date(startDate + 'T00:00:00');
+      const e = new Date(endDate + 'T23:59:59');
+      return { start: s.toISOString(), end: e.toISOString() };
     }
 
     return {
-      start: start.toISOString().split('T')[0],
-      end: end.toISOString().split('T')[0]
+      start: start.toISOString(),
+      end: end.toISOString()
     };
   };
 
@@ -378,8 +388,8 @@ export default function SalesPage() {
 
           <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit">
             {ranges.map((r) => (
-              <button 
-                key={r.key} 
+              <button
+                key={r.key}
                 onClick={() => setRangeType(r.key)}
                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${rangeType === r.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
               >
@@ -416,7 +426,7 @@ export default function SalesPage() {
 
                     <td><span className="badge-blue font-mono">{s.invoiceNumber}</span></td>
                     <td className="font-medium text-slate-700">{s.customer?.name}</td>
-                    <td className="text-slate-500">{s.items[0].quantity} items</td>
+                    <td className="text-slate-500">{s?.items[0]?.quantity || "0"} items</td>
                     <td>{formatSAR(s.subtotal)}</td>
                     <td className="text-red-500">{s.discount > 0 ? `- ${formatSAR(s.discount)}` : '—'}</td>
                     <td className="font-semibold text-emerald-600">{formatSAR(s.total)}</td>

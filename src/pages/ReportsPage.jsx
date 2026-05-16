@@ -124,10 +124,11 @@ export default function ReportsPage() {
             <div className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                  { label: 'Total Sales', value: data.totals?.count || 0 },
-                  { label: 'Revenue', value: formatSAR(data.totals?.revenue) },
-                  { label: 'Discount Given', value: formatSAR(data.totals?.discount) },
-                  { label: 'Tax Collected', value: formatSAR(data.totals?.tax) },
+                  { label: 'Number of Sales', value: data.data?.count || 0 },
+                  { label: 'Total Sales Amount', value: formatSAR(data.data?.revenue) },
+                  { label: 'Total Profit', value: formatSAR(data.data?.totalProfit) },
+                  { label: 'Discount Given', value: formatSAR(data.data?.discount) },
+                  { label: 'Tax Collected', value: formatSAR(data.data?.tax) },
                 ].map((s) => (
                   <div key={s.label} className="card text-center">
                     <p className="text-slate-400 text-xs mb-1">{s.label}</p>
@@ -228,7 +229,7 @@ export default function ReportsPage() {
                           <tr key={p._id}>
                             <td className="font-bold text-slate-900">{p.name}</td>
                             <td><span className="badge-blue font-bold">{p.sku}</span></td>
-                            <td><span className="badge-gray font-bold">{p.category}</span></td>
+                            <td><span className="badge-gray font-bold">{p.category.name}</span></td>
                             <td><span className={`font-bold ${p.quantity <= p.lowStockThreshold ? 'badge-red' : 'badge-green'}`}>{p.quantity}</span></td>
                             <td className="text-slate-900 font-medium">SAR {Number(p.purchasePrice).toLocaleString()}</td>
                             <td className="text-slate-900 font-medium">SAR {Number(p.salePrice).toLocaleString()}</td>
@@ -270,3 +271,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+

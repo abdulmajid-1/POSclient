@@ -14,7 +14,9 @@ import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import SupplierPage from './pages/SupplierPage';
 import SupplierPurchaseHistoryPage from './pages/SupplierPurchaseHistoryPage';
-import FakeBillPage from './pages/FakeBillPage';
+import QuickBillPage from './pages/QuickBillPage';
+import CustomerPage from './pages/CustomerPage';
+import CustomerHistoryPage from './pages/CustomerHistoryPage';
 
 export default function App() {
   return (
@@ -33,10 +35,12 @@ export default function App() {
               <Route path="/sales" element={<SalesPage />} />
               <Route path="/suppliers" element={<SupplierPage />} />
               <Route path="/suppliers/:id/history" element={<SupplierPurchaseHistoryPage />} />
+              <Route path="/customers" element={<CustomerPage />} />
+              <Route path="/customers/:id/history" element={<CustomerHistoryPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/returns" element={<ReturnsPage />} />
               <Route path="/reports" element={<ReportsPage />} />
-              {/* <Route path="/fake-bill" element={<FakeBillPage />} /> */}
+              <Route path="/quick-bill" element={<QuickBillPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
 

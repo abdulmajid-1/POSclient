@@ -30,22 +30,30 @@ export default function Dashboard() {
   const [rangeType, setRangeType] = useState('daily');
 
   const calculateDates = (type) => {
-    const end = new Date();
+    const now = new Date();
     let start = new Date();
+    let end = new Date();
 
     if (type === 'daily') {
       start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
     } else if (type === 'weekly') {
-      start.setDate(end.getDate() - 7);
+      start.setDate(now.getDate() - 7);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
     } else if (type === 'monthly') {
-      start.setDate(end.getDate() - 30);
+      start.setDate(now.getDate() - 30);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
     } else if (type === 'yearly') {
-      start.setDate(end.getDate() - 365);
+      start.setDate(now.getDate() - 365);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
     }
 
     return {
-      startDate: start.toISOString().split('T')[0],
-      endDate: end.toISOString().split('T')[0]
+      startDate: start.toISOString(),
+      endDate: end.toISOString()
     };
   };
 
@@ -81,10 +89,10 @@ export default function Dashboard() {
 
   const cards = [
     { title: "Sales", value: s.rangeSales?.count || 0, icon: MdShoppingCart, color: 'bg-primary-600', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} count` },
-    { title: "Revenue", value: formatSAR(s.rangeSales?.total), icon: MdAttachMoney, color: 'bg-emerald-500', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} total` },
+    { title: "Revenue", value: formatSAR(s.rangeSales?.revenue), icon: MdAttachMoney, color: 'bg-emerald-500', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} total` },
     { title: 'Total Products', value: s.productCount || 0, icon: MdInventory2, color: 'bg-violet-500', sub: `${s.lowStockCount || 0} low stock` },
     { title: 'Expenses', value: formatSAR(s.rangeExpenses), icon: MdMoneyOff, color: 'bg-amber-500', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} total` },
-    { title: 'Net Profit', value: formatSAR(s.rangeProfit), icon: MdTrendingUp, color: s.rangeProfit >= 0 ? 'bg-teal-500' : 'bg-red-500', sub: 'Revenue - Expenses - Returns' },
+    { title: 'Net Profit', value: formatSAR(s.rangeProfit), icon: MdTrendingUp, color: s.rangeProfit >= 0 ? 'bg-teal-500' : 'bg-red-500', sub: '' },
     { title: 'Returns', value: s.rangeReturns?.count || 0, icon: MdKeyboardReturn, color: 'bg-rose-500', sub: formatSAR(s.rangeReturns?.total) },
   ];
 
@@ -107,8 +115,8 @@ export default function Dashboard() {
         {/* Range Selector */}
         <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit border border-slate-200">
           {ranges.map((r) => (
-            <button 
-              key={r.key} 
+            <button
+              key={r.key}
               onClick={() => setRangeType(r.key)}
               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${rangeType === r.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
