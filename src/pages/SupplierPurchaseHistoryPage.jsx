@@ -213,6 +213,11 @@ export default function SupplierPurchaseHistoryPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">{supplier.name}</h1>
                     <p className="text-slate-500 text-sm font-medium">{supplier.company || 'Private Supplier'}</p>
+                    {supplier.vatNumber && (
+                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-violet-50 border border-violet-100 text-violet-700 text-[10px] font-black">
+                            VAT: {supplier.vatNumber}
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -245,14 +250,14 @@ export default function SupplierPurchaseHistoryPage() {
 
             {/* Tabs */}
             <div className="flex gap-2 p-1 bg-slate-100 rounded-xl w-fit">
-                <button 
+                <button
                     onClick={() => setActiveTab('purchases')}
                     className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'purchases' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                     <MdHistory size={18} />
                     Purchase History
                 </button>
-                <button 
+                <button
                     onClick={() => setActiveTab('payments')}
                     className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'payments' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
@@ -272,15 +277,19 @@ export default function SupplierPurchaseHistoryPage() {
                                     <th>Purchase #</th>
                                     <th>Items</th>
                                     <th>Total Amount</th>
+                                    <th>Paid</th>
+                                    <th>Remaining</th>
                                     <th>Status</th>
-                                    <th className="text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {purchases.length === 0 ? (
                                     <tr><td colSpan="6" className="text-center py-10 text-slate-400">No purchase records found</td></tr>
                                 ) : (
-                                    purchases.map((p) => (
+                                    purchases.map((p) => {
+                                        const paid = p.paidAmount || 0;
+                                        const remaining = (p.total || 0) - paid;
+                                        return (
                                         <tr key={p._id}>
                                             <td className="text-slate-600 font-medium">{new Date(p.date).toLocaleDateString('en-SA')}</td>
                                             <td className="font-bold text-slate-900">{p.purchaseNumber}</td>
@@ -288,21 +297,22 @@ export default function SupplierPurchaseHistoryPage() {
                                                 {p.items?.length > 0 ? `${p.items.length} Products` : `${p.totalItems || 0} Items`}
                                             </td>
                                             <td className="font-black text-slate-900">{formatSAR(p.total)}</td>
+                                            <td className="font-bold text-emerald-600">{formatSAR(paid)}</td>
+                                            <td>
+                                                {remaining > 0 ? (
+                                                    <span className="font-black text-red-500">{formatSAR(remaining)}</span>
+                                                ) : (
+                                                    <span className="font-bold text-emerald-500">Fully Paid</span>
+                                                )}
+                                            </td>
                                             <td>
                                                 <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${p.status === 'received' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                                     {p.status}
                                                 </span>
                                             </td>
-                                            <td className="text-right space-x-2">
-                                                <button onClick={() => setEditingPurchase(p)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                                                    <MdEdit size={18} />
-                                                </button>
-                                                <button onClick={() => handleDeletePurchase(p._id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                                    <MdDelete size={18} />
-                                                </button>
-                                            </td>
                                         </tr>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -317,7 +327,7 @@ export default function SupplierPurchaseHistoryPage() {
                                     <th>Method</th>
                                     <th>Amount</th>
                                     <th>Notes</th>
-                                    <th className="text-right">Actions</th>
+                                    {/* <th className="text-right">Actions</th> */}
                                 </tr>
                             </thead>
                             <tbody>
@@ -331,14 +341,14 @@ export default function SupplierPurchaseHistoryPage() {
                                             <td><span className="badge-blue uppercase text-[10px] font-black">{p.paymentMethod}</span></td>
                                             <td className="font-black text-emerald-600">{formatSAR(p.amount)}</td>
                                             <td className="text-slate-500 text-xs italic">{p.notes || '-'}</td>
-                                            <td className="text-right space-x-2">
+                                            {/* <td className="text-right space-x-2">
                                                 <button onClick={() => setEditingPayment(p)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
                                                     <MdEdit size={18} />
                                                 </button>
                                                 <button onClick={() => handleDeletePayment(p._id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                                                     <MdDelete size={18} />
                                                 </button>
-                                            </td>
+                                            </td> */}
                                         </tr>
                                     ))
                                 )}
@@ -348,21 +358,21 @@ export default function SupplierPurchaseHistoryPage() {
                 )}
             </div>
 
-            {editingPurchase && (
-                <EditPurchaseModal 
-                    purchase={editingPurchase} 
-                    onClose={() => setEditingPurchase(null)} 
-                    onSaved={fetchData} 
+            {/* {editingPurchase && (
+                <EditPurchaseModal
+                    purchase={editingPurchase}
+                    onClose={() => setEditingPurchase(null)}
+                    onSaved={fetchData}
                 />
             )}
 
             {editingPayment && (
-                <EditPaymentModal 
-                    payment={editingPayment} 
-                    onClose={() => setEditingPayment(null)} 
-                    onSaved={fetchData} 
+                <EditPaymentModal
+                    payment={editingPayment}
+                    onClose={() => setEditingPayment(null)}
+                    onSaved={fetchData}
                 />
-            )}
+            )} */}
         </div>
     );
 }

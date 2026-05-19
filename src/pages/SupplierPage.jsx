@@ -52,6 +52,7 @@ function RecordPurchaseModal({ supplier, onClose, onSaved }) {
                     subtotal: Number(form.amount),
                     tax: 0,
                     total: Number(form.amount),
+                    paidAmount: Number(form.paidAmount || 0),
                     totalItems: Number(form.totalItems || 0),
                     notes: form.notes,
                     date: form.date,
@@ -234,6 +235,7 @@ function AddSupplierModal({
         phone: '',
         email: '',
         address: '',
+        vatNumber: '',
         notes: '',
     });
 
@@ -389,6 +391,21 @@ function AddSupplierModal({
 
                     <div>
                         <label className="label">
+                            VAT Number <span className="text-slate-400 font-normal text-xs">(Optional)</span>
+                        </label>
+
+                        <input
+                            type="text"
+                            name="vatNumber"
+                            value={formData.vatNumber}
+                            onChange={handleChange}
+                            className="input"
+                            placeholder="e.g. 300000000000003"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="label">
                             Notes
                         </label>
 
@@ -432,6 +449,7 @@ function UpdateSupplierModal({
         phone: supplier.phone || '',
         email: supplier.email || '',
         address: supplier.address || '',
+        vatNumber: supplier.vatNumber || '',
         notes: supplier.notes || '',
     });
 
@@ -550,6 +568,15 @@ function UpdateSupplierModal({
                         onChange={handleChange}
                         placeholder="Address"
                         className="input min-h-[80px]"
+                    />
+
+                    <input
+                        type="text"
+                        name="vatNumber"
+                        value={formData.vatNumber}
+                        onChange={handleChange}
+                        placeholder="VAT Number (Optional)"
+                        className="input"
                     />
 
                     <textarea
@@ -703,6 +730,41 @@ export default function SupplierPage() {
 
             </div>
 
+            {/* FINANCIAL SUMMARY TOTALS */}
+            {!loading && suppliers.length > 0 && (() => {
+                const totalPurchased = suppliers.reduce((sum, s) => sum + (s.totalPurchases || 0), 0);
+                const totalPaid = suppliers.reduce((sum, s) => sum + (s.totalPaid || 0), 0);
+                const totalRemaining = totalPurchased - totalPaid;
+                return (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="card bg-white border-l-4 border-blue-500 p-5">
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><MdShoppingBag size={20} /></div>
+                                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Purchased</p>
+                            </div>
+                            <p className="text-2xl font-black text-slate-900">{formatSAR(totalPurchased)}</p>
+                            <p className="text-xs text-slate-400 mt-1">Across all {suppliers.length} suppliers</p>
+                        </div>
+                        <div className="card bg-white border-l-4 border-emerald-500 p-5">
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><MdPayments size={20} /></div>
+                                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Paid</p>
+                            </div>
+                            <p className="text-2xl font-black text-emerald-600">{formatSAR(totalPaid)}</p>
+                            <p className="text-xs text-slate-400 mt-1">Payments made to suppliers</p>
+                        </div>
+                        <div className="card bg-slate-900 border-l-4 border-primary-500 p-5 shadow-xl">
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="p-2 bg-primary-900/50 text-primary-400 rounded-lg"><MdHistory size={20} /></div>
+                                <p className="text-primary-400 text-xs font-bold uppercase tracking-wider">Total Remaining Balance</p>
+                            </div>
+                            <p className="text-2xl font-black text-white">{formatSAR(totalRemaining)}</p>
+                            <p className="text-xs text-primary-400/60 mt-1">Outstanding payable amount</p>
+                        </div>
+                    </div>
+                );
+            })()}
+
             {/* SEARCH */}
             <div className="card p-4 relative">
 
@@ -746,6 +808,7 @@ export default function SupplierPage() {
                             <tr>
                                 <th>Name</th>
                                 <th>Company</th>
+                                <th>VAT Number</th>
                                 <th>Phone</th>
                                 <th>Total Purchases</th>
                                 <th>Total Paid</th>
@@ -771,7 +834,17 @@ export default function SupplierPage() {
                                     </td>
 
                                     <td>
-                                        {s.company || '-'}
+                                        <div className="text-slate-700">{s.company || '-'}</div>
+                                    </td>
+
+                                    <td>
+                                        {s.vatNumber ? (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-violet-50 border border-violet-100 text-violet-700 text-[10px] font-black">
+                                                {s.vatNumber}
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-400">-</span>
+                                        )}
                                     </td>
 
                                     <td>
