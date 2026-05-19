@@ -51,7 +51,7 @@ export default function App() {
         </BrowserRouter>
 
         <Toaster
-          position="top-right"
+          position="top-center"
           toastOptions={{
             duration: 3000,
             style: { borderRadius: '12px', background: '#1e293b', color: '#f8fafc', fontSize: '14px' },

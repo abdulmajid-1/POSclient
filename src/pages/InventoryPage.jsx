@@ -6,7 +6,7 @@ import { MdAdd, MdSearch, MdClose, MdInventory2 } from 'react-icons/md';
 import toast from 'react-hot-toast';
 
 const CATEGORIES = ['Electronics', 'Stationery', 'Hardware', 'Other'];
-const EMPTY_FORM = { name: '', sku: '', category: '', purchasePrice: '', salePrice: '', quantity: '', lowStockThreshold: 10, supplier: '', description: '' };
+const EMPTY_FORM = { name: '', sku: '', category: '', purchasePrice: '', salePrice: '', quantity: '', lowStockThreshold: 10, supplier: '', description: '', baseUnit: 'unit', units: [] };
 let searchText = "";
 
 
@@ -21,6 +21,8 @@ function ProductModal({ product, onClose, onSaved }) {
         ...product,
         category: product.category?._id || product.category || '',
         supplier: product.supplier?._id || product.supplier || '',
+        baseUnit: product.baseUnit || 'unit',
+        units: product.units || [],
       };
     }
     return EMPTY_FORM;
@@ -74,6 +76,20 @@ function ProductModal({ product, onClose, onSaved }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddUnit = () => {
+    setForm({ ...form, units: [...form.units, { name: '', unitsPerBase: 1, sellingPrice: 0 }] });
+  };
+
+  const handleUpdateUnit = (index, field, value) => {
+    const newUnits = [...form.units];
+    newUnits[index][field] = value;
+    setForm({ ...form, units: newUnits });
+  };
+
+  const handleRemoveUnit = (index) => {
+    setForm({ ...form, units: form.units.filter((_, i) => i !== index) });
   };
 
   return (
@@ -165,10 +181,52 @@ function ProductModal({ product, onClose, onSaved }) {
             {field('Sale Price (SAR)', 'salePrice', 'number', true)}
           </div>
 
-          {/* QUANTITY */}
+          {/* QUANTITY AND BASE UNIT */}
           <div className="grid grid-cols-2 gap-4">
-            {field('Quantity', 'quantity', 'number', true)}
+            {field('Stock Quantity (in Base Unit)', 'quantity', 'number', true)}
+            {field('Base Unit (e.g. roll, box)', 'baseUnit', 'text', true)}
             {field('Low Stock Threshold', 'lowStockThreshold', 'number')}
+          </div>
+
+          {/* DYNAMIC SELLABLE UNITS */}
+          <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="label mb-0">Sellable Units (Optional)</label>
+              <button type="button" onClick={handleAddUnit} className="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded hover:bg-primary-100">
+                + Add Unit
+              </button>
+            </div>
+
+            {form.units.length === 0 && (
+              <p className="text-xs text-slate-500">No alternate units. Product will be sold only in its base unit.</p>
+            )}
+
+            {form.units.map((u, i) => (
+              <div key={i} className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Sub Unit Name</label>
+                  <input type="text" value={u.name} onChange={(e) => handleUpdateUnit(i, 'name', e.target.value)} className="input text-xs py-1.5" placeholder="e.g. meter" required />
+                </div>
+                <div className="w-24">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">{u.name} in {form.baseUnit}</label>
+                  <input type="number" value={u.unitsPerBase} onChange={(e) => handleUpdateUnit(i, 'unitsPerBase', Number(e.target.value))} className="input text-xs py-1.5" min="0.01" step="any" required />
+                </div>
+                <div className="w-24">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Price per {u.name}</label>
+                  <input type="number" value={u.sellingPrice} onChange={(e) => handleUpdateUnit(i, 'sellingPrice', Number(e.target.value))} className="input text-xs py-1.5" min="0" step="any" required />
+                </div>
+
+
+                <button type="button" onClick={() => handleRemoveUnit(i)} className="p-2 bg-red-50 text-red-500 rounded hover:bg-red-100 mb-[2px]">
+                  <MdClose size={14} />
+                </button>
+              </div>
+            ))}
+            {form.units.length > 0 && form.baseUnit && (
+              <div className="text-[11px] text-slate-500 bg-white p-2 rounded border border-slate-100">
+                Example conversion: 1 <span className="font-bold">{form.baseUnit}</span> = <span className="font-bold">{form.units[0]?.unitsPerBase || '?'} {form.units[0]?.name || '?'}</span>
+              </div>
+            )}
           </div>
 
           {/* {field('Supplier', 'supplier')} */}
@@ -282,7 +340,7 @@ export default function InventoryPage() {
         supplier: supplierFilter,
         page,
         limit,
-      }); 
+      });
       setProducts(data.products);
       setCategories(data.categories);
       setSuppliers(data.suppliers);
@@ -394,8 +452,14 @@ export default function InventoryPage() {
                   <tr key={p._id}>
                     <td>
                       <div className="font-medium text-slate-800">{p.name}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold">{p.baseUnit || 'unit'}</span>
+                        {p.units && p.units.length > 0 && (
+                          <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold">{p.units.length} units</span>
+                        )}
+                      </div>
                       {p.description && (
-                        <div className="text-xs text-slate-400 truncate max-w-xs">
+                        <div className="text-xs text-slate-400 truncate max-w-xs mt-1">
                           {p.description}
                         </div>
                       )}

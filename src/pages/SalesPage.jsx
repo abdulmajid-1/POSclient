@@ -175,6 +175,7 @@ function SaleDetailModal({ saleId, onClose }) {
                 <tr>
                   <th className="p-2 text-left">No / رقم</th>
                   <th className="p-2 text-left">Product / المنتج</th>
+                  <th className="p-2 text-center">Unit / الوحدة</th>
                   <th className="p-2">Unit Price / سعر الوحدة</th>
                   <th className="p-2">Qty / الكمية</th>
                   <th className="p-2">Disc / خصم</th>
@@ -190,8 +191,13 @@ function SaleDetailModal({ saleId, onClose }) {
                   <tr key={i} className="border-t">
 
                     <td className="p-2 text-center">{i + 1}</td>
+                    <td className="p-2">
+                      {item.productName}
+                    </td>
 
-                    <td className="p-2">{item.productName}</td>
+                    <td className="p-2 text-center font-bold text-slate-600">
+                      {item.selectedUnit || 'Unit'}
+                    </td>
 
                     <td className="p-2 text-center">
                       {formatSAR(item.unitPrice)}
@@ -214,11 +220,11 @@ function SaleDetailModal({ saleId, onClose }) {
                     </td>
 
                     <td className="p-2 text-center">
-                      {formatSAR(sale.tax || 0)}
+                      {formatSAR((item.totalPrice * (sale.taxRate || 0)) / 100)}
                     </td>
 
                     <td className="p-2 text-center font-semibold">
-                      {formatSAR(item.totalPrice + (sale.tax || 0))}
+                      {formatSAR(item.totalPrice + ((item.totalPrice * (sale.taxRate || 0)) / 100))}
                     </td>
 
                   </tr>

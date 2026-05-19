@@ -149,7 +149,7 @@ function ReturnReportModal({ data, onClose }) {
                   <tr key={idx}>
 
                     <td className="p-3 border-b">
-                      {item.productName}
+                      {item.productName} {item.selectedUnit ? `(${item.selectedUnit})` : ''}
                     </td>
 
                     <td className="p-3 border-b">
@@ -241,8 +241,8 @@ function ReturnModal({ onClose, onSaved }) {
 
       setSelectedItems(
         found.items.map((item) => ({
-          productId: item.product,
-          productName: item.productName,
+          productId: item.product || item._id,
+          productName: `${item.productName} ${item.selectedUnit ? `(${item.selectedUnit})` : ''}`,
           unitPrice: item.unitPrice,
           maxQty:
             item.quantity -

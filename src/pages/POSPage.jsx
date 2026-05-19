@@ -58,8 +58,8 @@ function InvoiceModal({ sale: initialSale, onClose }) {
   // Recalculate Sale Totals
   const currentSubtotal = items.reduce((acc, item) => acc + (Number(item.totalPrice) || 0), 0);
   const currentDiscountAmt = discountType === 'percentage' ? (currentSubtotal * (Number(discount) || 0)) / 100 : Number(discount || 0);
-  const currentTaxAmt = ((currentSubtotal - currentDiscountAmt) * (Number(taxRate) || 0)) / 100;
-  const currentTotal = currentSubtotal - currentDiscountAmt + currentTaxAmt;
+  const currentTaxAmt = (currentSubtotal * (Number(taxRate) || 0)) / 100;
+  const currentTotal = currentSubtotal + currentTaxAmt - currentDiscountAmt;
 
   const handleSave = async () => {
     if (items.length === 0) {
@@ -74,6 +74,7 @@ function InvoiceModal({ sale: initialSale, onClose }) {
           productName: i.productName,
           quantity: Number(i.quantity),
           unitPrice: Number(i.unitPrice),
+          purchasePrice: Number(i.purchasePrice) || 0,
           discount: Number(i.discount),
           discountType: i.discountType
         })),
@@ -108,261 +109,292 @@ function InvoiceModal({ sale: initialSale, onClose }) {
   };
 
   return (
-    <div className="modal-overlay !p-0">
-      <div className="modal-box !max-w-none !w-screen !h-screen !max-h-none !rounded-none flex flex-col p-0">
-        {/* MODAL HEADER */}
-        <div className="flex items-center justify-between p-4 border-b no-print bg-white sticky top-0 z-20">
-          <div className="flex items-center gap-4">
-            <h2 className="font-black text-slate-800 text-xl tracking-tight">Invoice Customization</h2>
-            <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Live Editor</span>
+    <div className="w-full p-4 print:p-3 box-border overflow-hidden">
+      <div className="modal-overlay !p-0">
+        <div className="modal-box !max-w-none !w-screen !h-screen !max-h-none !rounded-none flex flex-col p-0">
+          {/* MODAL HEADER */}
+          <div className="flex items-center justify-between p-4 border-b no-print bg-white sticky top-0 z-20">
+            <div className="flex items-center gap-4">
+              <h2 className="font-black text-slate-800 text-xl tracking-tight">Invoice Customization</h2>
+              <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Live Editor</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={handleAddItem} className="flex items-center gap-2 py-2 px-4 bg-primary-50 text-primary-600 rounded-xl text-xs font-black hover:bg-primary-100 transition-all border border-primary-100">
+                <MdAdd size={18} /> Add New Row
+              </button>
+              <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 py-2 px-6 bg-emerald-600 text-white rounded-xl text-xs font-black hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all disabled:opacity-50">
+                {isSaving ? 'Saving...' : 'Finalize & Save'}
+              </button>
+              <button onClick={handlePrint} className="flex items-center gap-2 py-2 px-4 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black shadow-xl transition-all">
+                <MdPrint size={18} /> Print Now
+              </button>
+              <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                <MdClose size={24} />
+              </button>
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <button onClick={handleAddItem} className="flex items-center gap-2 py-2 px-4 bg-primary-50 text-primary-600 rounded-xl text-xs font-black hover:bg-primary-100 transition-all border border-primary-100">
-              <MdAdd size={18} /> Add New Row
-            </button>
-            <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 py-2 px-6 bg-emerald-600 text-white rounded-xl text-xs font-black hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all disabled:opacity-50">
-              {isSaving ? 'Saving...' : 'Finalize & Save'}
-            </button>
-            <button onClick={handlePrint} className="flex items-center gap-2 py-2 px-4 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black shadow-xl transition-all">
-              <MdPrint size={18} /> Print Now
-            </button>
-            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-              <MdClose size={24} />
-            </button>
-          </div>
-        </div>
+          <div className="flex-1 overflow-y-auto">
+            <div ref={invoiceRef} className="p-10 text-sm text-slate-800 bg-white print:p-0">
+              <div className="grid grid-cols-3 items-center mb-6">
+                <div className="text-left">
+                  <h1 className="text-lg font-bold">Ewan Al-Hazm Trading Establishment</h1>
+                  <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Hand Tools - Equipment - Safety - Workshop Supplies
+                  </p>
+                  <p className="text-xs text-slate-500">Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia</p>
+                  <p className="text-xs text-slate-500">Mobile: 059 571 7520</p>
+                </div>
+                <div className="text-center space-y-2">
+                  <h1 className="text-[30px] font-bold">TAX INVOICE</h1>
+                  <p className="text-slate-500 text-[20px]">فاتورة ضريبية</p>
+                  <p className="text-md text-slate-500">VAT No: 313147090700003</p>
+                </div>
+                <div className="text-right space-y-2">
+                  <h1 className="text-[30px] font-bold leading-[1.2]">
+                    مؤسسة ايوان الحزم التجارية
+                  </h1>
 
-        <div className="flex-1 overflow-y-auto">
-          <div ref={invoiceRef} className="p-10 text-sm text-slate-800 bg-white print:p-0">
-            <div className="grid grid-cols-3 items-center mb-6">
-              <div className="text-left">
-                <h1 className="text-lg font-bold">Ewan Al-Hazm Trading Establishment</h1>
-                <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                  Hand Tools - Equipment - Safety - Workshop Supplies
-                </p>
-                <p className="text-xs text-slate-500">Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia</p>
-                <p className="text-xs text-slate-500">Mobile: 059 571 7520</p>
+                  <p className="text-[20px] font-semibold text-slate-600">
+                    عدد يدوية - معدات - سلامة - لوازم ورش
+                  </p>
+
+                  <p className="text-md text-slate-500">
+                    العنوان: السعادة، الخرج، السعودية
+                  </p>
+
+                  <p className="text-md text-slate-500 tracking-[0.2em]">
+                    الجوال: ٠٥٩٥٧١٧٥٢٠
+                  </p>
+                </div>
               </div>
-              <div className="text-center space-y-2">
-                <h1 className="text-[30px] font-bold">TAX INVOICE</h1>
-                <p className="text-slate-500 text-[20px]">فاتورة ضريبية</p>
-                <p className="text-md text-slate-500">VAT No: 313147090700003</p>
+
+
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div className="p-4 border rounded-lg space-y-2">
+                  <p className="font-bold">From / من</p>
+                  <p className="font-semibold">Ewan Al-Hazm Trading Establishment</p>
+                  <p className="text-md text-slate-400">مؤسسة ايوان الحزم التجارية</p>
+                  <p className="text-md text-slate-400">VAT / ضريبة: 313147090700003</p>
+                </div>
+                <div className="p-4 border rounded-lg space-y-2">
+                  <p className="font-bold mb-2">To / إلى</p>
+                  <p className="font-semibold">Customer / العميل: {sale.customer?.name || "Walk-in Customer"}</p>
+                  {sale.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {sale.customer.phone}</p>}
+                  {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
+                </div>
               </div>
-              <div className="text-right space-y-2">
-                <h1 className="text-[30px] font-bold leading-[1.2]">
-                  مؤسسة ايوان الحزم التجارية
-                </h1>
-
-                <p className="text-[20px] font-semibold text-slate-600">
-                  عدد يدوية - معدات - سلامة - لوازم ورش
-                </p>
-
-                <p className="text-md text-slate-500">
-                  العنوان: السعادة، الخرج، السعودية
-                </p>
-
-                <p className="text-md text-slate-500 tracking-[0.2em]">
-                  الجوال: ٠٥٩٥٧١٧٥٢٠
-                </p>
+              <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
+                <div className="border p-3 rounded">
+                  <p className="text-slate-500">Invoice No / رقم الفاتورة</p>
+                  <p className="text-lg font-semibold">{sale.invoiceNumber}</p>
+                </div>
+                <div className="border p-3 rounded">
+                  <p className="text-slate-500">Date / التاريخ</p>
+                  <p className="font-semibold">{new Date(sale.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div className="border p-3 rounded">
+                  <p className="text-slate-500">Currency / العملة</p>
+                  <p className="font-semibold">SAR / ريال</p>
+                </div>
               </div>
-            </div>
 
-
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="p-4 border rounded-lg space-y-2">
-                <p className="font-bold">From / من</p>
-                <p className="font-semibold">Ewan Al-Hazm Trading Establishment</p>
-                <p className="text-md text-slate-400">مؤسسة ايوان الحزم التجارية</p>
-                <p className="text-md text-slate-400">VAT / ضريبة: 313147090700003</p>
-              </div>
-              <div className="p-4 border rounded-lg space-y-2">
-                <p className="font-bold mb-2">To / إلى</p>
-                <p className="font-semibold">Customer / العميل: {sale.customer?.name || "Walk-in Customer"}</p>
-                {sale.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {sale.customer.phone}</p>}
-                {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
-              <div className="border p-3 rounded">
-                <p className="text-slate-500">Invoice No / رقم الفاتورة</p>
-                <p className="text-lg font-semibold">{sale.invoiceNumber}</p>
-              </div>
-              <div className="border p-3 rounded">
-                <p className="text-slate-500">Date / التاريخ</p>
-                <p className="font-semibold">{new Date(sale.createdAt).toLocaleDateString()}</p>
-              </div>
-              <div className="border p-3 rounded">
-                <p className="text-slate-500">Currency / العملة</p>
-                <p className="font-semibold">SAR / ريال</p>
-              </div>
-            </div>
-
-            {/* TABLE */}
-            <div className="border-2 border-slate-50 rounded-3xl overflow-hidden mb-10">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] tracking-widest font-black">
-                  <tr>
-                    <th className="p-4 text-left w-12 opacity-60">No / رقم</th>
-                    <th className="p-4 text-left">Product / المنتج</th>
-                    <th className="p-4 text-center w-32">Unit Price / سعر الوحدة</th>
-                    <th className="p-4 text-center w-28">Qty / الكمية</th>
-                    <th className="p-4 text-center w-32">Disc / خصم</th>
-                    <th className="p-4 text-center w-32">Subtotal / الإجمالي</th>
-                    <th className="p-4 text-center w-24">VAT % / الضريبة</th>
-                    <th className="p-4 text-center w-32">VAT Amt / مبلغ الضريبة</th>
-                    <th className="p-4 text-right w-40">Total / الإجمالي النهائي</th>
-                    <th className="p-4 text-center w-12 no-print"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {items.map((item, i) => (
-                    <tr key={i} className="group hover:bg-slate-50 transition-colors">
-                      {/* Index Row */}
-                      <td className="p-4 text-slate-400 font-black text-xs text-center">
-                        {String(i + 1).padStart(2, '0')}
-                      </td>
-
-                      {/* Product name */}
-                      <td className="p-4">
-                        <input
-                          type="text"
-                          value={item.productName}
-                          placeholder="Item description..."
-                          onChange={(e) => handleUpdateItem(i, 'productName', e.target.value)}
-                          className="w-full bg-transparent font-black text-slate-800 outline-none border-none focus:ring-0 p-0 text-base placeholder:text-slate-200"
-                        />
-                        <span className="hidden print:block font-black">{item.productName}</span>
-                      </td>
-
-                      {/* Unit Price */}
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-1.5 bg-slate-100 rounded-xl px-3 py-2 border border-transparent focus-within:border-primary-500 transition-all no-print">
-                          <span className="text-[10px] font-black text-slate-400 uppercase">SAR</span>
-                          <input
-                            type="number"
-                            value={item.unitPrice}
-                            onChange={(e) => handleUpdateItem(i, 'unitPrice', e.target.value)}
-                            className="w-full bg-transparent text-center font-black text-slate-800 outline-none"
-                          />
-                        </div>
-                        <span className="hidden print:block font-bold text-center">{formatSAR(item.unitPrice)}</span>
-                      </td>
-
-                      {/* Quantity */}
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-2 bg-slate-900 rounded-xl p-1 shadow-lg no-print">
-                          <button
-                            onClick={() => handleUpdateItem(i, 'quantity', Math.max(1, (Number(item.quantity) || 0) - 1))}
-                            className="w-6 h-6 flex items-center justify-center text-white/50 hover:text-white transition-colors"
-                          >
-                            <MdRemove size={14} />
-                          </button>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => handleUpdateItem(i, 'quantity', e.target.value)}
-                            className="w-8 bg-transparent text-center font-black text-white outline-none"
-                          />
-                          <button
-                            onClick={() => handleUpdateItem(i, 'quantity', (Number(item.quantity) || 0) + 1)}
-                            className="w-6 h-6 flex items-center justify-center text-white/50 hover:text-white transition-colors"
-                          >
-                            <MdAdd size={14} />
-                          </button>
-                        </div>
-                        <span className="hidden print:block font-bold text-center">{item.quantity}</span>
-                      </td>
-
-                      {/* Discount */}
-                      <td className="p-4">
-                        <div className="flex items-center gap-1 bg-white border-2 border-slate-100 rounded-xl px-2 py-1.5 shadow-sm no-print">
-                          <input
-                            type="number"
-                            value={item.discount}
-                            onChange={(e) => handleUpdateItem(i, 'discount', e.target.value)}
-                            className="w-full bg-transparent text-center font-black text-red-500 outline-none text-xs"
-                          />
-                          <select
-                            value={item.discountType}
-                            onChange={(e) => handleUpdateItem(i, 'discountType', e.target.value)}
-                            className="text-[9px] font-black bg-slate-100 rounded px-1 py-0.5 outline-none"
-                          >
-                            <option value="fixed">SAR</option>
-                            <option value="percentage">%</option>
-                          </select>
-                        </div>
-                        <span className="hidden print:block font-bold text-center text-red-500">
-                          {item.discount > 0 ? (item.discountType === 'percentage' ? `${item.discount}%` : formatSAR(item.discount)) : '-'}
-                        </span>
-                      </td>
-
-                      {/* Subtotal */}
-                      <td className="p-4 text-center">
-                        <span className="font-bold text-slate-700">{formatSAR(item.totalPrice)}</span>
-                      </td>
-
-                      {/* VAT % */}
-                      <td className="p-4 text-center">
-                        <span className="font-bold text-slate-600">{taxRate || 0}%</span>
-                      </td>
-
-                      {/* VAT Amount */}
-                      <td className="p-4 text-center">
-                        <span className="font-bold text-slate-600">{formatSAR(((Number(item.totalPrice) || 0) * (Number(taxRate) || 0)) / 100)}</span>
-                      </td>
-
-                      {/* Final Total */}
-                      <td className="p-4 text-right">
-                        <span className="text-lg font-black text-slate-900 tracking-tighter">
-                          {formatSAR((Number(item.totalPrice) || 0) + (((Number(item.totalPrice) || 0) * (Number(taxRate) || 0)) / 100))}
-                        </span>
-                      </td>
-
-                      {/* Actions / Remove button */}
-                      <td className="p-4 text-center no-print">
-                        <button
-                          onClick={() => handleRemoveItem(i)}
-                          className="w-8 h-8 flex items-center justify-center text-red-100 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                        >
-                          <MdDelete size={18} />
-                        </button>
-                      </td>
+              {/* TABLE */}
+              <div className="border-2 border-slate-50 rounded-3xl overflow-hidden mb-10">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] tracking-widest font-black">
+                    <tr>
+                      <th className="p-4 text-left w-12 opacity-60">No / رقم</th>
+                      <th className="p-4 text-left">Product / المنتج</th>
+                      <th className="p-4 text-center">Unit / الوحدة</th>
+                      <th className="p-4 text-center w-32 no-print">Cost / التكلفة</th>
+                      <th className="p-4 text-center w-32">Unit Price / سعر الوحدة</th>
+                      <th className="p-4 text-center w-28">Qty / الكمية</th>
+                      <th className="p-4 text-center w-32">Disc / خصم</th>
+                      <th className="p-4 text-center w-32">Subtotal / الإجمالي</th>
+                      <th className="p-4 text-center w-24">VAT % / الضريبة</th>
+                      <th className="p-4 text-center w-32">VAT Amt / مبلغ الضريبة</th>
+                      <th className="p-4 text-right w-40">Total / الإجمالي النهائي</th>
+                      <th className="p-4 text-center w-12 no-print"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {items.map((item, i) => (
+                      <tr key={i} className="group hover:bg-slate-50 transition-colors">
+                        {/* Index Row */}
+                        <td className="p-4 text-slate-400 font-black text-xs text-center">
+                          {String(i + 1).padStart(2, '0')}
+                        </td>
 
-            <div className="flex justify-end mb-6">
-              <div className="w-full max-w-md border rounded p-4 text-xs space-y-2">                <div className="flex justify-between">
-                <span>Subtotal / المجموع</span>
-                <span>{formatSAR(currentSubtotal)}</span>
+                        {/* Product name */}
+                        <td className="p-4">
+                          <input
+                            type="text"
+                            value={item.productName}
+                            placeholder="Item description..."
+                            onChange={(e) => handleUpdateItem(i, 'productName', e.target.value)}
+                            className="w-full bg-transparent font-black text-slate-800 outline-none border-none focus:ring-0 p-0 text-base placeholder:text-slate-200"
+                          />
+                          <span className="hidden print:block font-black">
+                            {item.productName}
+                          </span>
+                        </td>
+
+                        {/* Unit */}
+                        <td className="p-4 text-center">
+                          <span className="font-bold text-slate-600">{item.selectedUnit || 'Unit'}</span>
+                        </td>
+
+                        {/* Cost */}
+                        <td className="p-4 no-print">
+                          {item.productId?.startsWith('custom-') || item.isCustomItem ? (
+                            <div className="flex items-center justify-center gap-1.5 bg-slate-100 rounded-xl px-3 py-2 border border-transparent focus-within:border-primary-500 transition-all">
+                              <span className="text-[10px] font-black text-slate-400 uppercase">SAR</span>
+                              <input
+                                type="number"
+                                value={item.purchasePrice || ''}
+                                onChange={(e) => handleUpdateItem(i, 'purchasePrice', e.target.value)}
+                                className="w-full bg-transparent text-center font-black text-slate-800 outline-none"
+                                placeholder="0"
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-center font-bold text-slate-400">
+                              {formatSAR(item.purchasePrice || 0)}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Unit Price */}
+                        <td className="p-4">
+                          <div className="flex items-center justify-center gap-1.5 bg-slate-100 rounded-xl px-3 py-2 border border-transparent focus-within:border-primary-500 transition-all no-print">
+                            <span className="text-[10px] font-black text-slate-400 uppercase">SAR</span>
+                            <input
+                              type="number"
+                              value={item.unitPrice}
+                              onChange={(e) => handleUpdateItem(i, 'unitPrice', e.target.value)}
+                              className="w-full bg-transparent text-center font-black text-slate-800 outline-none"
+                            />
+                          </div>
+                          <span className="hidden print:block font-bold text-center">{formatSAR(item.unitPrice)}</span>
+                        </td>
+
+                        {/* Quantity */}
+                        <td className="p-4">
+                          <div className="flex items-center justify-center gap-2 bg-slate-900 rounded-xl p-1 shadow-lg no-print">
+                            <button
+                              onClick={() => handleUpdateItem(i, 'quantity', Math.max(1, (Number(item.quantity) || 0) - 1))}
+                              className="w-6 h-6 flex items-center justify-center text-white/50 hover:text-white transition-colors"
+                            >
+                              <MdRemove size={14} />
+                            </button>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleUpdateItem(i, 'quantity', e.target.value)}
+                              className="w-8 bg-transparent text-center font-black text-white outline-none"
+                            />
+                            <button
+                              onClick={() => handleUpdateItem(i, 'quantity', (Number(item.quantity) || 0) + 1)}
+                              className="w-6 h-6 flex items-center justify-center text-white/50 hover:text-white transition-colors"
+                            >
+                              <MdAdd size={14} />
+                            </button>
+                          </div>
+                          <span className="hidden print:block font-bold text-center">{item.quantity}</span>
+                        </td>
+
+                        {/* Discount */}
+                        <td className="p-4">
+                          <div className="flex items-center gap-1 bg-white border-2 border-slate-100 rounded-xl px-2 py-1.5 shadow-sm no-print">
+                            <input
+                              type="number"
+                              value={item.discount}
+                              onChange={(e) => handleUpdateItem(i, 'discount', e.target.value)}
+                              className="w-full bg-transparent text-center font-black text-red-500 outline-none text-xs"
+                            />
+                            <select
+                              value={item.discountType}
+                              onChange={(e) => handleUpdateItem(i, 'discountType', e.target.value)}
+                              className="text-[9px] font-black bg-slate-100 rounded px-1 py-0.5 outline-none"
+                            >
+                              <option value="fixed">SAR</option>
+                              <option value="percentage">%</option>
+                            </select>
+                          </div>
+                          <span className="hidden print:block font-bold text-center text-red-500">
+                            {item.discount > 0 ? (item.discountType === 'percentage' ? `${item.discount}%` : formatSAR(item.discount)) : '-'}
+                          </span>
+                        </td>
+
+                        {/* Subtotal */}
+                        <td className="p-4 text-center">
+                          <span className="font-bold text-slate-700">{formatSAR(item.totalPrice)}</span>
+                        </td>
+
+                        {/* VAT % */}
+                        <td className="p-4 text-center">
+                          <span className="font-bold text-slate-600">{taxRate || 0}%</span>
+                        </td>
+
+                        {/* VAT Amount */}
+                        <td className="p-4 text-center">
+                          <span className="font-bold text-slate-600">{formatSAR(((Number(item.totalPrice) || 0) * (Number(taxRate) || 0)) / 100)}</span>
+                        </td>
+
+                        {/* Final Total */}
+                        <td className="p-4 text-right">
+                          <span className="text-lg font-black text-slate-900 tracking-tighter">
+                            {formatSAR((Number(item.totalPrice) || 0) + (((Number(item.totalPrice) || 0) * (Number(taxRate) || 0)) / 100))}
+                          </span>
+                        </td>
+
+                        {/* Actions / Remove button */}
+                        <td className="p-4 text-center no-print">
+                          <button
+                            onClick={() => handleRemoveItem(i)}
+                            className="w-8 h-8 flex items-center justify-center text-red-100 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          >
+                            <MdDelete size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-                {currentDiscountAmt > 0 && (
-                  <div className="flex justify-between text-red-500">
-                    <span>Discount / الخصم</span>
-                    <span>- {formatSAR(currentDiscountAmt)}</span>
+
+              <div className="flex justify-end mb-6">
+                <div className="w-full max-w-md border rounded p-4 text-xs space-y-2">                <div className="flex justify-between">
+                  <span>Subtotal / المجموع</span>
+                  <span>{formatSAR(currentSubtotal)}</span>
+                </div>
+                  <div className="flex justify-between">
+                    <span>VAT / الضريبة</span>
+                    <span>{formatSAR(currentTaxAmt)}</span>
                   </div>
-                )}
-                <div className="flex justify-between">
-                  <span>VAT / الضريبة</span>
-                  <span>{formatSAR(currentTaxAmt)}</span>
-                </div>
-                <div className="flex justify-between font-bold border-t pt-2">
-                  <span>Grand Total / الإجمالي</span>
-                  <span className="text-primary-600">{formatSAR(currentTotal)}</span>
+                  {currentDiscountAmt > 0 && (
+                    <div className="flex justify-between text-red-500">
+                      <span>Discount / الخصم</span>
+                      <span>- {formatSAR(currentDiscountAmt)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold border-t pt-2">
+                    <span>Grand Total / الإجمالي</span>
+                    <span className="text-primary-600">{formatSAR(currentTotal)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
 
 
-            <div className="text-center text-[10px] text-slate-400 mt-10 opacity-50 no-print">
-              <p>AB Traders POS System </p>
+              <div className="text-center text-[10px] text-slate-400 mt-10 opacity-50 no-print">
+                <p>AB Traders POS System </p>
+              </div>
             </div>
           </div>
         </div>
@@ -417,7 +449,12 @@ export default function POSPage() {
         quantity: 1,
         discount: 0,
         discountType: 'fixed',
-        maxQty: product.quantity
+        maxQty: product.quantity,
+        baseQty: product.quantity,
+        baseUnit: product.baseUnit || 'unit',
+        units: product.units || [],
+        selectedUnit: product.baseUnit || 'unit',
+        conversionFactor: 1
       }];
     });
   };
@@ -430,6 +467,7 @@ export default function POSPage() {
         productId: customId,
         productName: 'New Item',
         unitPrice: 0,
+        purchasePrice: 0,
         quantity: 1,
         isCustom: true,
       },
@@ -438,6 +476,36 @@ export default function POSPage() {
 
   const updateItemName = (productId, name) => {
     setCart((prev) => prev.map((i) => (i.productId === productId ? { ...i, productName: name } : i)));
+  };
+
+  const updateUnit = (productId, unitName) => {
+    setCart((prev) => prev.map((i) => {
+      if (i.productId !== productId) return i;
+
+      let newFactor = 1;
+      let newPrice = i.originalSalePrice;
+
+      if (unitName !== i.baseUnit) {
+        const u = i.units.find(u => u.name === unitName);
+        if (u) {
+          newFactor = u.unitsPerBase;
+          newPrice = u.sellingPrice;
+        }
+      }
+
+      const newMaxQty = Math.floor(i.baseQty * newFactor);
+      let newQty = i.quantity;
+      if (newQty > newMaxQty) newQty = newMaxQty;
+
+      return {
+        ...i,
+        selectedUnit: unitName,
+        conversionFactor: newFactor,
+        unitPrice: newPrice,
+        maxQty: newMaxQty,
+        quantity: newQty
+      };
+    }));
   };
 
   const updateQty = (productId, qty) => {
@@ -471,8 +539,8 @@ export default function POSPage() {
     0
   );
   const discountAmt = discountType === 'percentage' ? (subtotal * discount) / 100 : Number(discount);
-  const taxAmt = ((subtotal - discountAmt) * taxRate) / 100;
-  const total = subtotal - discountAmt + taxAmt;
+  const taxAmt = (subtotal * taxRate) / 100;
+  const total = subtotal + taxAmt - discountAmt;
 
   const handleCheckout = async () => {
     const validItems = cart.filter((i) => Number(i.quantity) > 0);
@@ -502,7 +570,12 @@ export default function POSPage() {
           productId: i.productId,
           productName: i.productName,
           quantity: Number(i.quantity),
-          unitPrice: Number(i.unitPrice) || 0
+          unitPrice: Number(i.unitPrice) || 0,
+          purchasePrice: Number(i.purchasePrice) || 0,
+          selectedUnit: i.selectedUnit,
+          conversionFactor: i.conversionFactor,
+          discount: Number(i.discount) || 0,
+          discountType: i.discountType
         })),
         customer,
         discount: Number(discount),
@@ -629,9 +702,23 @@ export default function POSPage() {
                       placeholder="Item Name"
                     />
                   ) : (
-                    <p className="text-sm font-medium text-slate-700 truncate">
-                      {item.productName}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-slate-700 truncate">
+                        {item.productName}
+                      </p>
+                      {item.units && item.units.length > 0 && (
+                        <select
+                          value={item.selectedUnit}
+                          onChange={(e) => updateUnit(item.productId, e.target.value)}
+                          className="text-xs bg-white border border-slate-200 rounded px-1 py-0.5 outline-none font-bold text-primary-700 shadow-sm"
+                        >
+                          <option value={item.baseUnit}>{item.baseUnit} (base)</option>
+                          {item.units.map(u => (
+                            <option key={u.name} value={u.name}>{u.name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   )}
                   <div className="flex flex-col gap-2 mt-2">
                     <div className="flex items-center gap-2">
@@ -796,9 +883,16 @@ export default function POSPage() {
               <span className="font-semibold">{formatSAR(subtotal)}</span>
             </div>
 
+            {taxAmt > 0 && (
+              <div className="flex justify-between opacity-80">
+                <span>Tax ({taxRate}%)</span>
+                <span>{formatSAR(taxAmt)}</span>
+              </div>
+            )}
+
             {discountAmt > 0 && (
               <div className="flex justify-between text-amber-400 font-medium">
-                <span>Discount on Subtotal Bill</span>
+                <span>Discount on Grand Total</span>
                 <span>- {formatSAR(discountAmt)}</span>
               </div>
             )}
@@ -821,13 +915,6 @@ export default function POSPage() {
               }
               return null;
             })()}
-
-            {taxAmt > 0 && (
-              <div className="flex justify-between opacity-80">
-                <span>Tax ({taxRate}%)</span>
-                <span>{formatSAR(taxAmt)}</span>
-              </div>
-            )}
 
             <div className="flex justify-between font-bold text-xl pt-2 border-t border-slate-700 mt-2">
               <span>Grand Total</span>
