@@ -69,15 +69,21 @@ function InvoiceModal({ sale: initialSale, onClose }) {
     setIsSaving(true);
     try {
       const payload = {
-        items: items.map(i => ({
-          productId: i.product?._id || i.productId,
-          productName: i.productName,
-          quantity: Number(i.quantity),
-          unitPrice: Number(i.unitPrice),
-          purchasePrice: Number(i.purchasePrice) || 0,
-          discount: Number(i.discount),
-          discountType: i.discountType
-        })),
+        items: items.map(i => {
+          let pId = i.productId;
+          if (i.product) {
+            pId = typeof i.product === 'object' ? i.product._id : i.product;
+          }
+          return {
+            productId: pId,
+            productName: i.productName,
+            quantity: Number(i.quantity),
+            unitPrice: Number(i.unitPrice),
+            purchasePrice: Number(i.purchasePrice) || 0,
+            discount: Number(i.discount),
+            discountType: i.discountType
+          };
+        }),
         customer: sale.customer,
         discount: Number(discount),
         discountType: discountType,

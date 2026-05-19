@@ -241,7 +241,7 @@ function ReturnModal({ onClose, onSaved }) {
 
       setSelectedItems(
         found.items.map((item) => ({
-          productId: item.product || item._id,
+          productId: item.product,
           productName: `${item.productName} ${item.selectedUnit ? `(${item.selectedUnit})` : ''}`,
           unitPrice: item.unitPrice,
           maxQty:
