@@ -251,6 +251,10 @@ function ReturnModal({ onClose, onSaved }) {
           returnedQuantity:
             item.returnedQuantity || 0,
           originalQuantity: item.quantity,
+          purchasePrice: item.purchasePrice,
+          profit: item.profit,
+          isCustomItem: item.isCustomItem,
+
         }))
       );
     } catch {

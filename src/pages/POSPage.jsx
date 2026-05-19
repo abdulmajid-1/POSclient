@@ -144,8 +144,10 @@ function InvoiceModal({ sale: initialSale, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div ref={invoiceRef} className="p-10 text-sm text-slate-800 bg-white print:p-0">
-            <div className="grid grid-cols-3 items-center mb-6">
+          <div
+            ref={invoiceRef}
+            className="print-container p-10 text-sm text-slate-800 bg-white print:p-2"
+          >            <div className="grid grid-cols-3 items-center mb-6">
               <div className="text-left">
                 <h1 className="text-lg font-bold">Ewan Al-Hazm Trading Establishment</h1>
                 <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
@@ -213,18 +215,18 @@ function InvoiceModal({ sale: initialSale, onClose }) {
               <table className="w-full text-sm">
                 <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] tracking-widest font-black">
                   <tr>
-                    <th className="p-4 text-left w-12 opacity-60">No / رقم</th>
-                    <th className="p-4 text-left">Product / المنتج</th>
-                    <th className="p-4 text-center">Unit / الوحدة</th>
-                    <th className="p-4 text-center w-32 no-print">Cost / التكلفة</th>
-                    <th className="p-4 text-center w-32">Unit Price / سعر الوحدة</th>
-                    <th className="p-4 text-center w-28">Qty / الكمية</th>
-                    <th className="p-4 text-center w-32">Disc / خصم</th>
-                    <th className="p-4 text-center w-32">Subtotal / الإجمالي</th>
-                    <th className="p-4 text-center w-24">VAT % / الضريبة</th>
-                    <th className="p-4 text-center w-32">VAT Amt / مبلغ الضريبة</th>
-                    <th className="p-4 text-right w-40">Total / الإجمالي النهائي</th>
-                    <th className="p-4 text-center w-12 no-print"></th>
+                    <th className="p-2 text-left w-12 opacity-60">No / رقم</th>
+                    <th className="p-2 text-left">Product / المنتج</th>
+                    <th className="p-2 text-center">Unit / الوحدة</th>
+                    <th className="p-2 text-center w-32">Unit Price / سعر الوحدة</th>
+                    <th className="p-2 text-center w-32 no-print">Cost / التكلفة</th>
+                    <th className="p-2 text-center w-28">Qty / الكمية</th>
+                    <th className="p-2 text-center w-32">Discount / خصم</th>
+                    <th className="p-2 text-center w-32">Subtotal / الإجمالي</th>
+                    <th className="p-2 text-center w-24">VAT % / الضريبة</th>
+                    <th className="p-2 text-center w-32">VAT Amt / مبلغ الضريبة</th>
+                    <th className="p-2 text-right w-40">Total / الإجمالي النهائي</th>
+                    <th className="p-2 text-center w-12 no-print"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -241,10 +243,13 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                           type="text"
                           value={item.productName}
                           placeholder="Item description..."
-                          onChange={(e) => handleUpdateItem(i, 'productName', e.target.value)}
-                          className="w-full bg-transparent font-black text-slate-800 outline-none border-none focus:ring-0 p-0 text-base placeholder:text-slate-200"
+                          onChange={(e) =>
+                            handleUpdateItem(i, 'productName', e.target.value)
+                          }
+                          className="w-full bg-transparent font-black text-slate-800 outline-none border-none focus:ring-0 p-0 text-sm placeholder:text-slate-200 print:hidden"
                         />
-                        <span className="hidden print:block font-black">
+
+                        <span className="hidden print:block font-black text-sm">
                           {item.productName}
                         </span>
                       </td>
@@ -958,3 +963,4 @@ export default function POSPage() {
     </div>
   );
 }
+
