@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSales, getSale } from '../services/saleService';
 import { MdSearch, MdVisibility, MdClose, MdHistory, MdPrint } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
-import { useRef } from 'react';
-
+import { useRef as usePrintRef } from 'react';
+import { TableSkeleton } from '../components/SkeletonLoader';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -58,119 +59,66 @@ function SaleDetailModal({ saleId, onClose }) {
         ) : sale ? (
           <div ref={invoiceRef} className="p-8 text-sm text-slate-800">
 
-            {/* ================= TITLE (SAME AS POS) ================= */}
+            {/* ================= TITLE ================= */}
             <div className="grid grid-cols-3 items-center mb-6">
-
-              {/* LEFT - ENGLISH */}
               <div className="text-left">
-                <h1 className="text-lg font-bold">
-                  Ewan Al-Hazm Trading Establishment
-                </h1>
+                <h1 className="text-lg font-bold">Ewan Al-Hazm Trading Establishment</h1>
                 <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Hand Tools - Equipment - Safety - Workshop Supplies
                 </p>
-                <p className="text-xs text-slate-500">
-                  Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia
-                </p>
-                <p className="text-xs text-slate-500">
-                  Mobile: 059 571 7520
-                </p>
+                <p className="text-xs text-slate-500">Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia</p>
+                <p className="text-xs text-slate-500">Mobile: 059 571 7520</p>
               </div>
 
-              {/* CENTER */}
               <div className="text-center">
                 <h1 className="text-2xl font-bold">TAX INVOICE</h1>
                 <p className="text-slate-500 text-sm">فاتورة ضريبية</p>
-                <p className="text-xs text-slate-500">
-                  VAT No: 313147090700003
-                </p>
+                <p className="text-xs text-slate-500">VAT No: 313147090700003</p>
               </div>
 
-              {/* RIGHT - ARABIC */}
               <div className="text-right">
-                <h1 className="text-lg font-bold">
-                  مؤسسة ايوان الحزم التجارية
-                </h1>
-                <p className="text-[10px] font-semibold text-slate-600 mb-1">
-                  عدد يدوية - معدات - سلامة - لوازم ورش
-                </p>
-                <p className="text-xs text-slate-500">
-                  العنوان: السعادة، الخرج، السعودية
-                </p>
-                <p className="text-xs text-slate-500">
-                  الجوال:٠٥٩٥٧١٧٥٢٠
-                </p>
+                <h1 className="text-lg font-bold">مؤسسة ايوان الحزم التجارية</h1>
+                <p className="text-[10px] font-semibold text-slate-600 mb-1">عدد يدوية - معدات - سلامة - لوازم ورش</p>
+                <p className="text-xs text-slate-500">العنوان: السعادة، الخرج، السعودية</p>
+                <p className="text-xs text-slate-500">الجوال:٠٥٩٥٧١٧٥٢٠</p>
               </div>
-
             </div>
 
             {/* ================= FROM / TO ================= */}
             <div className="grid grid-cols-2 gap-6 mb-6">
-
-              {/* FROM */}
               <div className="p-4 border rounded-lg">
                 <p className="font-bold mb-2">From / من</p>
-
-                <p className="font-semibold">
-                  Ewan Al-Hazm Trading Establishment
-                </p>
-
-                <p className="text-xs text-slate-400">
-                  مؤسسة ايوان الحزم التجارية
-                </p>
-
-                <p className="text-xs text-slate-400">
-                  VAT / ضريبة: 313147090700003
-                </p>
+                <p className="font-semibold">Ewan Al-Hazm Trading Establishment</p>
+                <p className="text-xs text-slate-400">مؤسسة ايوان الحزم التجارية</p>
+                <p className="text-xs text-slate-400">VAT / ضريبة: 313147090700003</p>
               </div>
 
-              {/* TO */}
               <div className="p-4 border rounded-lg">
                 <p className="font-bold mb-2">To / إلى</p>
-
-                <p className="font-semibold">
-                  Customer / العميل: {sale.customer?.name || "Walk-in Customer"}
-                </p>
-
-                {sale.customer?.phone && (
-                  <p className="text-slate-500">
-                    Mobile / الجوال: {sale.customer.phone}
-                  </p>
-                )}
-
-                {sale.customer?.vatNumber && (
-                  <p className="text-slate-500">
-                    VAT / ضريبة: {sale.customer.vatNumber}
-                  </p>
-                )}
+                <p className="font-semibold">Customer / العميل: {sale.customer?.name || 'Walk-in Customer'}</p>
+                {sale.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {sale.customer.phone}</p>}
+                {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
               </div>
-
             </div>
+
             {/* ================= META ================= */}
             <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
-
               <div className="border p-3 rounded">
                 <p className="text-slate-500">Invoice No / رقم</p>
                 <p className="font-semibold">{sale.invoiceNumber}</p>
               </div>
-
               <div className="border p-3 rounded">
                 <p className="text-slate-500">Date / التاريخ</p>
-                <p className="font-semibold">
-                  {new Date(sale.createdAt).toLocaleString()}
-                </p>
+                <p className="font-semibold">{new Date(sale.createdAt).toLocaleString()}</p>
               </div>
-
               <div className="border p-3 rounded">
                 <p className="text-slate-500">Currency / العملة</p>
                 <p className="font-semibold">SAR / ريال</p>
               </div>
-
             </div>
 
             {/* ================= TABLE ================= */}
             <table className="w-full border text-xs mb-6">
-
               <thead className="bg-slate-100">
                 <tr>
                   <th className="p-2 text-left">No / رقم</th>
@@ -185,83 +133,49 @@ function SaleDetailModal({ saleId, onClose }) {
                   <th className="p-2">Total / الإجمالي النهائي</th>
                 </tr>
               </thead>
-
               <tbody>
                 {sale.items.map((item, i) => (
                   <tr key={i} className="border-t">
-
                     <td className="p-2 text-center">{i + 1}</td>
-                    <td className="p-2">
-                      {item.productName}
-                    </td>
-
-                    <td className="p-2 text-center font-bold text-slate-600">
-                      {item.selectedUnit || 'Unit'}
-                    </td>
-
-                    <td className="p-2 text-center">
-                      {formatSAR(item.unitPrice)}
-                    </td>
-
-                    <td className="p-2 text-center">
-                      {item.quantity}
-                    </td>
-
+                    <td className="p-2">{item.productName}</td>
+                    <td className="p-2 text-center font-bold text-slate-600">{item.selectedUnit || 'Unit'}</td>
+                    <td className="p-2 text-center">{formatSAR(item.unitPrice)}</td>
+                    <td className="p-2 text-center">{item.quantity}</td>
                     <td className="p-2 text-center text-red-500">
                       {item.discount > 0 ? (item.discountType === 'percentage' ? `${item.discount}%` : formatSAR(item.discount)) : '-'}
                     </td>
-
-                    <td className="p-2 text-center">
-                      {formatSAR(item.totalPrice)}
-                    </td>
-
-                    <td className="p-2 text-center">
-                      {sale.taxRate || 0}%
-                    </td>
-
-                    <td className="p-2 text-center">
-                      {formatSAR((item.totalPrice * (sale.taxRate || 0)) / 100)}
-                    </td>
-
+                    <td className="p-2 text-center">{formatSAR(item.totalPrice)}</td>
+                    <td className="p-2 text-center">{sale.taxRate || 0}%</td>
+                    <td className="p-2 text-center">{formatSAR((item.totalPrice * (sale.taxRate || 0)) / 100)}</td>
                     <td className="p-2 text-center font-semibold">
                       {formatSAR(item.totalPrice + ((item.totalPrice * (sale.taxRate || 0)) / 100))}
                     </td>
-
                   </tr>
                 ))}
               </tbody>
-
             </table>
-
 
             {/* ================= SUMMARY ================= */}
             <div className="flex justify-end">
               <div className="w-80 border rounded p-4 text-xs space-y-2">
-
                 <div className="flex justify-between">
                   <span>Subtotal / المجموع</span>
                   <span>{formatSAR(sale.subtotal)}</span>
                 </div>
-
                 <div className="flex justify-between font-bold border-t pt-2">
                   <span>Total / الإجمالي</span>
-                  <span className="text-primary-600">
-                    {formatSAR(sale.total)}
-                  </span>
+                  <span className="text-primary-600">{formatSAR(sale.total)}</span>
                 </div>
-
                 <div className="flex justify-between pt-1">
                   <span>VAT / الضريبة</span>
                   <span>{formatSAR(sale.tax)}</span>
                 </div>
-
                 {sale.discount > 0 && (
                   <div className="flex justify-between text-slate-600">
                     <span>Discount on Subtotal Bill / خصم الفاتورة الفرعي</span>
                     <span>- {formatSAR(sale.discount)}</span>
                   </div>
                 )}
-
                 {(() => {
                   const itemDiscSum = sale.items.reduce((acc, item) => {
                     const base = item.unitPrice * item.quantity;
@@ -269,7 +183,6 @@ function SaleDetailModal({ saleId, onClose }) {
                     return acc + (Number(d) || 0);
                   }, 0);
                   const totalDisc = itemDiscSum + (Number(sale.discount) || 0);
-
                   if (totalDisc > 0) {
                     return (
                       <div className="flex justify-between text-red-600 font-bold border-t border-dashed pt-2 mt-2">
@@ -280,92 +193,86 @@ function SaleDetailModal({ saleId, onClose }) {
                   }
                   return null;
                 })()}
-
               </div>
             </div>
-
           </div>
         ) : null}
-
       </div>
     </div>
   );
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Helper: calculate date range from a range type string
+// ──────────────────────────────────────────────────────────────────────────────
+function calculateDates(type, startDate, endDate) {
+  const now = new Date();
+  let start = new Date();
+  let end = new Date();
+
+  if (type === 'daily') {
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+  } else if (type === 'weekly') {
+    start.setDate(now.getDate() - 7);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+  } else if (type === 'monthly') {
+    start.setDate(now.getDate() - 30);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+  } else if (type === 'yearly') {
+    start.setDate(now.getDate() - 365);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+  } else if (type === 'custom') {
+    const s = new Date(startDate + 'T00:00:00');
+    const e = new Date(endDate + 'T23:59:59');
+    return { start: s.toISOString(), end: e.toISOString() };
+  }
+
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
 export default function SalesPage() {
-  const [sales, setSales] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debounceRef = useRef(null);
+
   const [rangeType, setRangeType] = useState('monthly');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
-  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
 
-  const calculateDates = (type) => {
-    const now = new Date();
-    let start = new Date();
-    let end = new Date();
-
-    if (type === 'daily') {
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    } else if (type === 'weekly') {
-      start.setDate(now.getDate() - 7);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    } else if (type === 'monthly') {
-      start.setDate(now.getDate() - 30);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    } else if (type === 'yearly') {
-      start.setDate(now.getDate() - 365);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    } else if (type === 'custom') {
-      const s = new Date(startDate + 'T00:00:00');
-      const e = new Date(endDate + 'T23:59:59');
-      return { start: s.toISOString(), end: e.toISOString() };
-    }
-
-    return {
-      start: start.toISOString(),
-      end: end.toISOString()
-    };
-  };
-
-  const fetchSales = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { start, end } = calculateDates(rangeType);
-      const { data } = await getSales({
-        search,
-        startDate: start,
-        endDate: end,
-        page,
-        limit,
-      });
-
-      setSales(data.sales || []);
-      setTotal(data.total || 0);
-      setTotalPages(data.totalPages || 1);
-
-    } catch (error) {
-      toast.error('Failed to load sales');
-    } finally {
-      setLoading(false);
-    }
-  }, [search, startDate, endDate, rangeType, page, limit]);
-
+  // 300ms debounce — reset page on new search
   useEffect(() => {
-    setPage(1);
-  }, [search, startDate, endDate, rangeType]);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
 
-  useEffect(() => {
-    fetchSales();
-  }, [fetchSales]);
+  // Reset page when range or dates change
+  useEffect(() => { setPage(1); }, [rangeType, startDate, endDate]);
+
+  const dates = calculateDates(rangeType, startDate, endDate);
+
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['sales', debouncedSearch, rangeType, startDate, endDate, page],
+    queryFn: () =>
+      getSales({ search: debouncedSearch, startDate: dates.start, endDate: dates.end, page, limit })
+        .then((r) => r.data),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  });
+
+  const sales = data?.sales || [];
+  const total = data?.total || 0;
+  const totalPages = data?.totalPages || 1;
 
   const ranges = [
     { key: 'daily', label: 'Daily' },
@@ -389,7 +296,17 @@ export default function SalesPage() {
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by invoice or customer..." className="input pl-9" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by invoice or customer..."
+              className="input pl-9 pr-9"
+            />
+            {isFetching && !isLoading && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-slate-300 border-t-primary-600 rounded-full animate-spin" />
+              </div>
+            )}
           </div>
 
           <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit">
@@ -409,14 +326,14 @@ export default function SalesPage() {
           <div className="card p-4 flex flex-col sm:flex-row gap-3 items-end animate-slide-down">
             <div className="flex-1"><label className="label text-[10px] font-black uppercase text-slate-400">From Date</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input" /></div>
             <div className="flex-1"><label className="label text-[10px] font-black uppercase text-slate-400">To Date</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="input" /></div>
-            <button onClick={fetchSales} className="btn-primary shrink-0 px-8">Apply</button>
+            <button onClick={() => refetch()} className="btn-primary shrink-0 px-8">Apply</button>
           </div>
         )}
       </div>
 
       <div className="card p-0">
-        {loading ? (
-          <div className="flex justify-center items-center h-48"><div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" /></div>
+        {isLoading ? (
+          <TableSkeleton rows={8} cols={9} />
         ) : sales.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-slate-400"><MdHistory size={48} className="opacity-30 mb-3" /><p>No sales found</p></div>
         ) : (
@@ -425,14 +342,12 @@ export default function SalesPage() {
               <thead>
                 <tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Subtotal</th><th>Discount</th><th>Total</th><th>Payment</th><th>Date</th><th>Status</th><th></th></tr>
               </thead>
-
               <tbody>
                 {sales.map((s) => (
                   <tr key={s._id}>
-
                     <td><span className="badge-blue font-mono">{s.invoiceNumber}</span></td>
                     <td className="font-medium text-slate-700">{s.customer?.name}</td>
-                    <td className="text-slate-500">{s?.items[0]?.quantity || "0"} items</td>
+                    <td className="text-slate-500">{s?.items[0]?.quantity || '0'} items</td>
                     <td>{formatSAR(s.subtotal)}</td>
                     <td className="text-red-500">{s.discount > 0 ? `- ${formatSAR(s.discount)}` : '—'}</td>
                     <td className="font-semibold text-emerald-600">{formatSAR(s.total)}</td>
@@ -453,8 +368,8 @@ export default function SalesPage() {
       </div>
 
       {selectedSaleId && <SaleDetailModal saleId={selectedSaleId} onClose={() => setSelectedSaleId(null)} />}
-      <div className="flex items-center justify-between p-4 border-t">
 
+      <div className="flex items-center justify-between p-4 border-t">
         <button
           disabled={page === 1}
           onClick={() => setPage((p) => p - 1)}
@@ -462,11 +377,7 @@ export default function SalesPage() {
         >
           Previous
         </button>
-
-        <div className="text-sm font-bold text-slate-500">
-          Page {page} of {totalPages}
-        </div>
-
+        <div className="text-sm font-bold text-slate-500">Page {page} of {totalPages}</div>
         <button
           disabled={page === totalPages}
           onClick={() => setPage((p) => p + 1)}
@@ -474,7 +385,6 @@ export default function SalesPage() {
         >
           Next
         </button>
-
       </div>
     </div>
   );

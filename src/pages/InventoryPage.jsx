@@ -1,9 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/productService';
+import { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useProducts } from '../hooks/useProducts';
+import { createProduct, updateProduct, deleteProduct } from '../services/productService';
 import { getSuppliers, createSupplier } from "../services/supplierService";
 import { getCategories, createCategory } from "../services/categoryService";
 import { MdAdd, MdSearch, MdClose, MdInventory2 } from 'react-icons/md';
 import toast from 'react-hot-toast';
+import { TableSkeleton } from '../components/SkeletonLoader';
 
 const CATEGORIES = ['Electronics', 'Stationery', 'Hardware', 'Other'];
 const EMPTY_FORM = { name: '', sku: '', category: '', purchasePrice: '', salePrice: '', quantity: '', lowStockThreshold: 10, supplier: '', description: '', baseUnit: 'unit', units: [] };
@@ -318,48 +321,52 @@ function ProductModal({ product, onClose, onSaved }) {
 }
 
 export default function InventoryPage() {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debounceRef = useRef(null);
   const [catFilter, setCatFilter] = useState('');
-  const [suppliers, setSuppliers] = useState([]);
   const [supplierFilter, setSupplierFilter] = useState('');
-  const [modal, setModal] = useState(null); // null | 'add' | product object
+  const [modal, setModal] = useState(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const limit = 20;
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data } = await getProducts({
-        search,
-        category: catFilter,
-        supplier: supplierFilter,
-        page,
-        limit,
-      });
-      setProducts(data.products);
-      setCategories(data.categories);
-      setSuppliers(data.suppliers);
-      setTotal(data.total);
-      setTotalPages(data.totalPages || Math.ceil(data.total / limit) || 1);
-    } catch { toast.error('Failed to load products'); }
-    finally { setLoading(false); }
-  }, [search, catFilter, supplierFilter, page]);
+  const queryClient = useQueryClient();
 
-  useEffect(() => { setPage(1); }, [search, catFilter, supplierFilter]);
+  // 300ms debounce on search — resets page to 1
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [catFilter, supplierFilter]);
+
+  const { data: productData, isLoading, isFetching } = useProducts({
+    search: debouncedSearch,
+    category: catFilter,
+    supplier: supplierFilter,
+    page,
+    limit,
+  });
+
+  const products = productData?.products || [];
+  const categories = productData?.categories || [];
+  const suppliers = productData?.suppliers || [];
+  const total = productData?.total || 0;
+  const totalPages = productData?.totalPages || Math.ceil(total / limit) || 1;
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['products'] });
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete "${name}"?`)) return;
     try {
       await deleteProduct(id);
       toast.success('Product deleted');
-      fetchProducts();
+      invalidate();
     } catch { toast.error('Delete failed'); }
   };
 
@@ -368,9 +375,9 @@ export default function InventoryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Inventory</h1>
-          <p className="text-slate-500 text-sm">{total} products total</p>
-        </div>
+        <h1 className="text-2xl font-bold text-slate-800">Inventory</h1>
+        <p className="text-slate-500 text-sm">{total} products total</p>
+      </div>
         <button id="add-product-btn" onClick={() => setModal('add')} className="btn-primary">
           <MdAdd size={18} /> Add Product
         </button>
@@ -427,10 +434,8 @@ export default function InventoryPage() {
       </div>
       {/* Table */}
       <div className="card p-0">
-        {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-          </div>
+        {isLoading ? (
+          <TableSkeleton rows={8} cols={8} />
         ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <MdInventory2 size={48} className="mb-3 opacity-30" />
@@ -545,7 +550,7 @@ export default function InventoryPage() {
         <ProductModal
           product={modal === 'add' ? null : modal}
           onClose={() => setModal(null)}
-          onSaved={() => { setModal(null); fetchProducts(); }}
+          onSaved={() => { setModal(null); invalidate(); }}
         />
       )}
     </div>

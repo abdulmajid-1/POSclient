@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { getDashboardStats } from '../services/dashboardService';
-import { getWeeklySummary, getMonthlySummary } from '../services/saleService';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from 'recharts';
-import { MdShoppingCart, MdAttachMoney, MdInventory2, MdMoneyOff, MdKeyboardReturn, MdWarning, MdTrendingUp, MdTrendingDown } from 'react-icons/md';
+import { useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
+import { MdShoppingCart, MdAttachMoney, MdInventory2, MdMoneyOff, MdKeyboardReturn, MdWarning, MdTrendingUp } from 'react-icons/md';
 import toast from 'react-hot-toast';
+import { useDashboardStats, useWeeklySummary, useMonthlySummary } from '../hooks/useDashboard';
+import { StatSkeleton, ChartSkeleton } from '../components/SkeletonLoader';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -23,73 +23,25 @@ function StatCard({ title, value, icon: Icon, color, sub }) {
 }
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(null);
-  const [weeklyData, setWeeklyData] = useState([]);
-  const [monthlyData, setMonthlyData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [rangeType, setRangeType] = useState('daily');
 
-  const calculateDates = (type) => {
-    const now = new Date();
-    let start = new Date();
-    let end = new Date();
+  const { data: statsData, isLoading: statsLoading, isError: statsError } = useDashboardStats(rangeType);
+  const { data: weeklyRaw, isLoading: weeklyLoading } = useWeeklySummary();
+  const { data: monthlyRaw, isLoading: monthlyLoading } = useMonthlySummary();
 
-    if (type === 'daily') {
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    } else if (type === 'weekly') {
-      start.setDate(now.getDate() - 7);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    } else if (type === 'monthly') {
-      start.setDate(now.getDate() - 30);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    } else if (type === 'yearly') {
-      start.setDate(now.getDate() - 365);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-    }
+  if (statsError) toast.error('Failed to load dashboard data');
 
-    return {
-      startDate: start.toISOString(),
-      endDate: end.toISOString()
-    };
-  };
+  const weeklyData = (weeklyRaw?.data || []).map((d) => ({
+    ...d,
+    name: d._id ? new Date(d._id).toLocaleDateString('en', { weekday: 'short' }) : d._id,
+  }));
+  const monthlyData = monthlyRaw?.data || [];
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        const dates = calculateDates(rangeType);
-        const [dashRes, weekRes, monthRes] = await Promise.all([
-          getDashboardStats(dates),
-          getWeeklySummary(),
-          getMonthlySummary(),
-        ]);
-        setStats(dashRes.data);
-        setWeeklyData(weekRes.data.data.map((d) => ({ ...d, name: d._id ? new Date(d._id).toLocaleDateString('en', { weekday: 'short' }) : d._id })));
-        setMonthlyData(monthRes.data.data);
-      } catch {
-        toast.error('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, [rangeType]);
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-
-  const s = stats?.stats || {};
+  const s = statsData?.stats || {};
 
   const cards = [
-    { title: "Sales", value: s.rangeSales?.count || 0, icon: MdShoppingCart, color: 'bg-primary-600', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} count` },
-    { title: "Revenue", value: formatSAR(s.rangeSales?.revenue), icon: MdAttachMoney, color: 'bg-emerald-500', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} total` },
+    { title: 'Sales', value: s.rangeSales?.count || 0, icon: MdShoppingCart, color: 'bg-primary-600', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} count` },
+    { title: 'Revenue', value: formatSAR(s.rangeSales?.revenue), icon: MdAttachMoney, color: 'bg-emerald-500', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} total` },
     { title: 'Total Products', value: s.productCount || 0, icon: MdInventory2, color: 'bg-violet-500', sub: `${s.lowStockCount || 0} low stock` },
     { title: 'Expenses', value: formatSAR(s.rangeExpenses), icon: MdMoneyOff, color: 'bg-amber-500', sub: `${rangeType.charAt(0).toUpperCase() + rangeType.slice(1)} total` },
     { title: 'Net Profit', value: formatSAR(s.rangeProfit), icon: MdTrendingUp, color: s.rangeProfit >= 0 ? 'bg-teal-500' : 'bg-red-500', sub: '' },
@@ -111,8 +63,6 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
           <p className="text-slate-500 text-sm mt-1">Business performance overview.</p>
         </div>
-
-        {/* Range Selector */}
         <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit border border-slate-200">
           {ranges.map((r) => (
             <button
@@ -126,40 +76,50 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {cards.map((c) => <StatCard key={c.title} {...c} />)}
-      </div>
+      {/* Stat Cards — show skeleton on first load, stale data while refreshing */}
+      {statsLoading && !statsData ? (
+        <StatSkeleton count={6} />
+      ) : (
+        <div className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 transition-opacity duration-200 ${statsLoading ? 'opacity-60' : 'opacity-100'}`}>
+          {cards.map((c) => <StatCard key={c.title} {...c} />)}
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Bar Chart */}
-        <div className="card">
-          <h2 className="font-semibold text-slate-800 mb-4">Weekly Sales (Last 7 Days)</h2>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={weeklyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <Tooltip formatter={(v) => [`SAR ${v?.toLocaleString()}`, 'Revenue']} />
-              <Bar dataKey="revenue" fill="#2563eb" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {weeklyLoading && !weeklyData.length ? (
+          <ChartSkeleton />
+        ) : (
+          <div className="card">
+            <h2 className="font-semibold text-slate-800 mb-4">Weekly Sales (Last 7 Days)</h2>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={weeklyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <Tooltip formatter={(v) => [`SAR ${v?.toLocaleString()}`, 'Revenue']} />
+                <Bar dataKey="revenue" fill="#2563eb" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
-        {/* Monthly Line Chart */}
-        <div className="card">
-          <h2 className="font-semibold text-slate-800 mb-4">Monthly Revenue (This Year)</h2>
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <Tooltip formatter={(v) => [`SAR ${v?.toLocaleString()}`, 'Revenue']} />
-              <Line type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {monthlyLoading && !monthlyData.length ? (
+          <ChartSkeleton />
+        ) : (
+          <div className="card">
+            <h2 className="font-semibold text-slate-800 mb-4">Monthly Revenue (This Year)</h2>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <Tooltip formatter={(v) => [`SAR ${v?.toLocaleString()}`, 'Revenue']} />
+                <Line type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* Bottom Row */}
@@ -169,15 +129,15 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 mb-4">
             <MdWarning className="text-amber-500" size={20} />
             <h2 className="font-semibold text-slate-800">Low Stock Alerts</h2>
-            {stats?.lowStockProducts?.length > 0 && (
-              <span className="badge-yellow ml-auto">{stats.lowStockProducts.length} items</span>
+            {statsData?.lowStockProducts?.length > 0 && (
+              <span className="badge-yellow ml-auto">{statsData.lowStockProducts.length} items</span>
             )}
           </div>
-          {stats?.lowStockProducts?.length === 0 ? (
+          {statsData?.lowStockProducts?.length === 0 ? (
             <p className="text-slate-400 text-sm text-center py-6">✅ All products are well-stocked</p>
           ) : (
             <div className="space-y-2">
-              {stats?.lowStockProducts?.map((p) => (
+              {statsData?.lowStockProducts?.map((p) => (
                 <div key={p._id} className="flex items-center justify-between py-2 px-3 bg-amber-50 rounded-lg border border-amber-100">
                   <div>
                     <p className="text-sm font-medium text-slate-700">{p.name}</p>
@@ -193,11 +153,11 @@ export default function Dashboard() {
         {/* Recent Sales */}
         <div className="card">
           <h2 className="font-semibold text-slate-800 mb-4">Recent Transactions</h2>
-          {stats?.recentSales?.length === 0 ? (
+          {statsData?.recentSales?.length === 0 ? (
             <p className="text-slate-400 text-sm text-center py-6">No recent transactions</p>
           ) : (
             <div className="space-y-2">
-              {stats?.recentSales?.map((sale) => (
+              {statsData?.recentSales?.map((sale) => (
                 <div key={sale._id} className="flex items-center justify-between py-2 px-3 hover:bg-slate-50 rounded-lg transition-colors">
                   <div>
                     <p className="text-sm font-medium text-slate-700">{sale.invoiceNumber}</p>

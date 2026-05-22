@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 
 import {
     getSuppliers,
@@ -21,10 +21,12 @@ import {
     MdPayments,
     MdShoppingBag,
 } from 'react-icons/md';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createPurchase } from '../services/purchaseService';
-
+import { useSuppliers } from '../hooks/useSuppliers';
 import toast from 'react-hot-toast';
+import { TableSkeleton } from '../components/SkeletonLoader';
 
 const formatSAR = (n) =>
     `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
@@ -609,90 +611,39 @@ function UpdateSupplierModal({
 export default function SupplierPage() {
 
     const navigate = useNavigate();
-    const [suppliers, setSuppliers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+
+    const { data: suppliers = [], isLoading } = useSuppliers();
+
+    const invalidate = () => queryClient.invalidateQueries({ queryKey: ['suppliers'] });
 
     const [showPurchaseModal, setShowPurchaseModal] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [purchaseSupplier, setPurchaseSupplier] = useState(null);
-
     const [search, setSearch] = useState('');
-
-    const [showAddModal, setShowAddModal] =
-        useState(false);
-
-    const [editingSupplier, setEditingSupplier] =
-        useState(null);
-
-    const fetchSuppliers = useCallback(async () => {
-
-        setLoading(true);
-
-        try {
-
-            const { data } = await getSuppliers();
-
-            setSuppliers(data.data || []);
-
-        } catch {
-
-            toast.error('Failed to load suppliers');
-
-        } finally {
-
-            setLoading(false);
-
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchSuppliers();
-    }, [fetchSuppliers]);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [editingSupplier, setEditingSupplier] = useState(null);
 
     const handleAddPurchase = async (data) => {
         try {
-
-            await addSupplierPurchase(
-                purchaseSupplier._id,
-                data
-            );
-
+            await addSupplierPurchase(purchaseSupplier._id, data);
             toast.success('Purchase added successfully');
-
             setShowPurchaseModal(false);
-
-            fetchSuppliers();
-
+            invalidate();
         } catch {
             toast.error('Failed to add purchase');
         }
     };
 
     const handleDeleteSupplier = async (id) => {
-
-        const confirmDelete = window.confirm(
-            'Are you sure you want to delete this supplier?'
-        );
-
+        const confirmDelete = window.confirm('Are you sure you want to delete this supplier?');
         if (!confirmDelete) return;
-
         try {
-
             await deleteSupplier(id);
-
-            toast.success(
-                'Supplier deleted successfully'
-            );
-
-            fetchSuppliers();
-
+            toast.success('Supplier deleted successfully');
+            invalidate();
         } catch (err) {
-
-            toast.error(
-                err.response?.data?.message ||
-                'Failed to delete supplier'
-            );
-
+            toast.error(err.response?.data?.message || 'Failed to delete supplier');
         }
     };
 
@@ -731,7 +682,7 @@ export default function SupplierPage() {
             </div>
 
             {/* FINANCIAL SUMMARY TOTALS */}
-            {!loading && suppliers.length > 0 && (() => {
+            {!isLoading && suppliers.length > 0 && (() => {
                 const totalPurchased = suppliers.reduce((sum, s) => sum + (s.totalPurchases || 0), 0);
                 const totalPaid = suppliers.reduce((sum, s) => sum + (s.totalPaid || 0), 0);
                 const totalRemaining = totalPurchased - totalPaid;
@@ -787,11 +738,8 @@ export default function SupplierPage() {
             {/* TABLE */}
             <div className="card p-0 overflow-hidden">
 
-                {loading ? (
-
-                    <div className="p-10 text-center text-slate-400">
-                        Loading...
-                    </div>
+                {isLoading ? (
+                    <TableSkeleton rows={5} cols={8} />
 
                 ) : filteredSuppliers.length === 0 ? (
 
@@ -935,7 +883,7 @@ export default function SupplierPage() {
             {showAddModal && (
                 <AddSupplierModal
                     onClose={() => setShowAddModal(false)}
-                    onCreated={fetchSuppliers}
+                    onCreated={invalidate}
                 />
             )}
 
@@ -943,29 +891,23 @@ export default function SupplierPage() {
                 <UpdateSupplierModal
                     supplier={editingSupplier}
                     onClose={() => setEditingSupplier(null)}
-                    onUpdated={fetchSuppliers}
+                    onUpdated={invalidate}
                 />
             )}
 
             {showPurchaseModal && (
                 <RecordPurchaseModal
                     supplier={purchaseSupplier}
-                    onClose={() => {
-                        setShowPurchaseModal(false);
-                        setPurchaseSupplier(null);
-                    }}
-                    onSaved={fetchSuppliers}
+                    onClose={() => { setShowPurchaseModal(false); setPurchaseSupplier(null); }}
+                    onSaved={invalidate}
                 />
             )}
 
             {showPaymentModal && (
                 <AddPaymentModal
                     supplier={purchaseSupplier}
-                    onClose={() => {
-                        setShowPaymentModal(false);
-                        setPurchaseSupplier(null);
-                    }}
-                    onSaved={fetchSuppliers}
+                    onClose={() => { setShowPaymentModal(false); setPurchaseSupplier(null); }}
+                    onSaved={invalidate}
                 />
             )}
 

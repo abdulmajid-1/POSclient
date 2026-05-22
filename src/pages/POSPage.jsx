@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { getProducts } from '../services/productService';
+import { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useProducts } from '../hooks/useProducts';
 import { createSale, updateSale } from '../services/saleService';
-import { MdSearch, MdAdd, MdRemove, MdDelete, MdSettings, MdReceipt, MdPrint, MdClose, MdShoppingCart, MdPerson, MdPostAdd } from 'react-icons/md';
+import { MdSearch, MdAdd, MdRemove, MdDelete, MdReceipt, MdPrint, MdClose, MdShoppingCart, MdPerson, MdPostAdd } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import CustomerSelector from '../components/CustomerSelector';
+import { CardSkeleton, InlineSpinner } from '../components/SkeletonLoader';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -416,8 +418,12 @@ function InvoiceModal({ sale: initialSale, onClose }) {
 
 
 export default function POSPage() {
-  const [products, setProducts] = useState([]);
+  // Immediate search state (bound to input)
   const [search, setSearch] = useState('');
+  // Debounced search state (sent to API after 300ms pause)
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debounceRef = useRef(null);
+
   const [cart, setCart] = useState([]);
   const [customer, setCustomer] = useState({ name: 'Walk-in Customer', phone: '', vatNumber: '' });
   const [discount, setDiscount] = useState(0);
@@ -427,20 +433,29 @@ export default function POSPage() {
   const [loading, setLoading] = useState(false);
   const [invoice, setInvoice] = useState(null);
   const [showCustomerSelector, setShowCustomerSelector] = useState(false);
-
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      const { data } = await getProducts({ search, page, limit: 20 });
-      setProducts(data.products);
-      setTotalPages(Math.ceil(data.total / 20));
-    } catch { toast.error('Failed to load products'); }
-  }, [search, page]);
+  const queryClient = useQueryClient();
 
-  useEffect(() => { setPage(1); }, [search]);
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  // Debounce: wait 300ms after user stops typing, then update debouncedSearch
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1); // reset to page 1 on new search
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
+
+  // React Query — cached, 30s stale time. placeholderData keeps previous results visible.
+  const { data: productData, isLoading: productsInitialLoading, isFetching: productsFetching } = useProducts({
+    search: debouncedSearch,
+    page,
+    limit: 20,
+  });
+
+  const products = productData?.products || [];
+  const totalPages = Math.ceil((productData?.total || 0) / 20) || 1;
 
   const addToCart = (product) => {
     if (product.quantity === 0) return toast.error('Out of stock');
@@ -599,7 +614,8 @@ export default function POSPage() {
       setTaxRate(15);
       setCustomer({ name: 'Walk-in Customer', phone: '', vatNumber: '' });
       toast.success('Sale completed!');
-      fetchProducts();
+      // Invalidate products cache so stock counts update immediately
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     } catch (err) { toast.error(err.response?.data?.message || 'Sale failed'); }
     finally { setLoading(false); }
   };
@@ -630,26 +646,42 @@ export default function POSPage() {
         </div>
         <div className="relative">
           <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products..." className="input pl-9" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products..."
+            className="input pl-9 pr-9"
+          />
+          {/* Non-blocking inline spinner while fetching (not on initial load) */}
+          {productsFetching && !productsInitialLoading && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <InlineSpinner size={16} />
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
-          {products.map((p) => (
-            <button key={p._id} onClick={() => addToCart(p)}
-              className={`p-3 text-left rounded-xl border transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 ${p.quantity === 0 ? 'border-red-100 bg-red-50 opacity-60 cursor-not-allowed' : 'border-slate-100 bg-white hover:border-primary-200 hover:bg-primary-50'}`}>
-              <div className="w-full h-20 bg-slate-100 rounded-lg flex items-center justify-center mb-2 text-slate-300">
-                <MdShoppingCart size={28} />
-              </div>
-              <p className="text-xs font-bold text-slate-900 truncate">{p.name}</p>
-              <p className="text-[10px] font-bold text-blue-600 truncate">{p.sku}</p>
-              <p className="text-sm font-black text-primary-600 mt-1">SAR {Number(p.salePrice).toLocaleString()}</p>
-              <p className="text-[11px] text-slate-900 font-bold">Cost: SAR {Number(p.purchasePrice || 0).toLocaleString()}</p>
-              <p className={`text-xs mt-0.5 font-black ${p.quantity <= p.lowStockThreshold ? 'text-red-600' : 'text-emerald-700'}`}>
-                {p.quantity} in stock
-              </p>
-            </button>
-          ))}
-          {products.length === 0 && <p className="col-span-full text-center text-slate-400 py-12">No products found</p>}
+          {/* Show skeleton only on the very first load (no cached data yet) */}
+          {productsInitialLoading ? (
+            <CardSkeleton count={12} />
+          ) : products.length === 0 ? (
+            <p className="col-span-full text-center text-slate-400 py-12">No products found</p>
+          ) : (
+            products.map((p) => (
+              <button key={p._id} onClick={() => addToCart(p)}
+                className={`p-3 text-left rounded-xl border transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 ${p.quantity === 0 ? 'border-red-100 bg-red-50 opacity-60 cursor-not-allowed' : 'border-slate-100 bg-white hover:border-primary-200 hover:bg-primary-50'}`}>
+                <div className="w-full h-20 bg-slate-100 rounded-lg flex items-center justify-center mb-2 text-slate-300">
+                  <MdShoppingCart size={28} />
+                </div>
+                <p className="text-xs font-bold text-slate-900 truncate">{p.name}</p>
+                <p className="text-[10px] font-bold text-blue-600 truncate">{p.sku}</p>
+                <p className="text-sm font-black text-primary-600 mt-1">SAR {Number(p.salePrice).toLocaleString()}</p>
+                <p className="text-[11px] text-slate-900 font-bold">Cost: SAR {Number(p.purchasePrice || 0).toLocaleString()}</p>
+                <p className={`text-xs mt-0.5 font-black ${p.quantity <= p.lowStockThreshold ? 'text-red-600' : 'text-emerald-700'}`}>
+                  {p.quantity} in stock
+                </p>
+              </button>
+            ))
+          )}
         </div>
 
         {/* Pagination Controls */}
