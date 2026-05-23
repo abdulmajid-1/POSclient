@@ -396,9 +396,30 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                       </td>
 
                       {/* Qty */}
-                      <td className="p-4 text-center">
-                        <span className="font-black">{item.quantity}</span>
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-2 bg-slate-900 rounded-xl p-1 shadow-lg no-print">
+                          <button
+                            onClick={() => handleUpdateItem(i, 'quantity', Math.max(1, (Number(item.quantity) || 0) - 1))}
+                            className="w-6 h-6 flex items-center justify-center text-white/50 hover:text-white transition-colors"
+                          >
+                            <MdRemove size={14} />
+                          </button>
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleUpdateItem(i, 'quantity', e.target.value)}
+                            className="w-8 bg-transparent text-center font-black text-white outline-none"
+                          />
+                          <button
+                            onClick={() => handleUpdateItem(i, 'quantity', (Number(item.quantity) || 0) + 1)}
+                            className="w-6 h-6 flex items-center justify-center text-white/50 hover:text-white transition-colors"
+                          >
+                            <MdAdd size={14} />
+                          </button>
+                        </div>
+                        <span className="hidden print:block font-bold text-center">{item.quantity}</span>
                       </td>
+
 
                       {/* Discount */}
                       <td className="p-4 text-center">
