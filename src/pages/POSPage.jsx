@@ -273,33 +273,71 @@ function InvoiceModal({ sale: initialSale, onClose }) {
             </div>
 
             {/* TABLE */}
+
+
             <div className="border-2 border-slate-50 rounded-3xl overflow-hidden mb-10">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-fixed">
+
                 <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] tracking-widest font-black">
                   <tr>
-                    <th className="p-2 text-left w-12 opacity-60">No / رقم</th>
-                    <th className="p-2 text-left">Product / المنتج</th>
-                    <th className="p-2 text-center">Unit / الوحدة</th>
-                    <th className="p-2 text-center w-32">Unit Price / سعر الوحدة</th>
-                    <th className="p-2 text-center w-32 no-print">Cost / التكلفة</th>
-                    <th className="p-2 text-center w-28">Qty / الكمية</th>
-                    <th className="p-2 text-center w-32">Discount / خصم</th>
-                    <th className="p-2 text-center w-32">Subtotal / الإجمالي</th>
-                    <th className="p-2 text-center w-24">VAT % / الضريبة</th>
-                    <th className="p-2 text-center w-32">VAT Amt / مبلغ الضريبة</th>
-                    <th className="p-2 text-right w-40">Total / الإجمالي النهائي</th>
-                    <th className="p-2 text-center w-12 no-print"></th>
+                    <th className="p-2 w-[4%] text-left opacity-60">No / رقم</th>
+
+                    {/* ✅ PRODUCT COLUMN MADE BIGGER */}
+                    <th className="p-2 w-[26%] text-left">
+                      Product / المنتج
+                    </th>
+
+                    <th className="p-2 w-[8%] text-center">
+                      Unit / الوحدة
+                    </th>
+
+                    <th className="p-2 w-[10%] text-center">
+                      Unit Price / سعر الوحدة
+                    </th>
+
+                    <th className="p-2 w-[6%] text-center no-print">
+                      Sell price / التكلفة
+                    </th>
+
+                    <th className="p-2 w-[7%] text-center">
+                      Qty / الكمية
+                    </th>
+
+                    <th className="p-2 w-[8%] text-center">
+                      Discount / خصم
+                    </th>
+
+                    <th className="p-2 w-[9%] text-center">
+                      Subtotal / الإجمالي
+                    </th>
+
+                    <th className="p-2 w-[6%] text-center">
+                      VAT % / الضريبة
+                    </th>
+
+                    <th className="p-2 w-[9%] text-center">
+                      VAT Amt / مبلغ الضريبة
+                    </th>
+
+                    <th className="p-2 w-[11%] text-right">
+                      Total / الإجمالي النهائي
+                    </th>
+
+                    <th className="p-2 w-[4%] text-center no-print"></th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-slate-50">
+
                   {items.map((item, i) => (
                     <tr key={i} className="group hover:bg-slate-50 transition-colors">
-                      {/* Index Row */}
+
+                      {/* No */}
                       <td className="p-4 text-slate-400 font-black text-xs text-center">
                         {String(i + 1).padStart(2, '0')}
                       </td>
 
-                      {/* Product name */}
+                      {/* ✅ PRODUCT CELL (UNCHANGED UI) */}
                       <td className="p-4">
                         <input
                           type="text"
@@ -318,125 +356,113 @@ function InvoiceModal({ sale: initialSale, onClose }) {
 
                       {/* Unit */}
                       <td className="p-4 text-center">
-                        <span className="font-bold text-slate-600">{item.selectedUnit || 'Unit'}</span>
+                        <span className="font-bold text-slate-600">
+                          {item.selectedUnit || 'Unit'}
+                        </span>
                       </td>
 
                       {/* Cost */}
-                      <td className="p-4 no-print">
+                      <td className="p-4 no-print text-center">
                         {item.productId?.startsWith('custom-') || item.isCustomItem ? (
-                          <div className="flex items-center justify-center gap-1.5 bg-slate-100 rounded-xl px-3 py-2 border border-transparent focus-within:border-primary-500 transition-all">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">SAR</span>
-                            <input
-                              type="number"
-                              value={item.purchasePrice || ''}
-                              onChange={(e) => handleUpdateItem(i, 'purchasePrice', e.target.value)}
-                              className="w-full bg-transparent text-center font-black text-slate-800 outline-none"
-                              placeholder="0"
-                            />
-                          </div>
+                          <input
+                            type="number"
+                            value={item.purchasePrice || ''}
+                            onChange={(e) =>
+                              handleUpdateItem(i, 'purchasePrice', e.target.value)
+                            }
+                            className="w-full text-center font-black text-slate-800 outline-none bg-slate-100 rounded px-2 py-1"
+                          />
                         ) : (
-                          <div className="text-center font-bold text-slate-400">
+                          <span className="font-bold text-slate-400">
                             {formatSAR(item.purchasePrice || 0)}
-                          </div>
+                          </span>
                         )}
                       </td>
 
                       {/* Unit Price */}
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-1.5 bg-slate-100 rounded-xl px-3 py-2 border border-transparent focus-within:border-primary-500 transition-all no-print">
-                          <span className="text-[10px] font-black text-slate-400 uppercase">SAR</span>
-                          <input
-                            type="number"
-                            value={item.unitPrice}
-                            onChange={(e) => handleUpdateItem(i, 'unitPrice', e.target.value)}
-                            className="w-full bg-transparent text-center font-black text-slate-800 outline-none"
-                          />
-                        </div>
-                        <span className="hidden print:block font-bold text-center">{formatSAR(item.unitPrice)}</span>
+                      <td className="p-4 text-center">
+                        <input
+                          type="number"
+                          value={item.unitPrice}
+                          onChange={(e) =>
+                            handleUpdateItem(i, 'unitPrice', e.target.value)
+                          }
+                          className="w-full text-center font-black text-slate-800 outline-none bg-slate-100 rounded px-2 py-1 no-print"
+                        />
+
+                        <span className="hidden print:block font-bold">
+                          {formatSAR(item.unitPrice)}
+                        </span>
                       </td>
 
-                      {/* Quantity */}
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-2 bg-slate-900 rounded-xl p-1 shadow-lg no-print">
-                          <button
-                            onClick={() => handleUpdateItem(i, 'quantity', Math.max(1, (Number(item.quantity) || 0) - 1))}
-                            className="w-6 h-6 flex items-center justify-center text-white/50 hover:text-white transition-colors"
-                          >
-                            <MdRemove size={14} />
-                          </button>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => handleUpdateItem(i, 'quantity', e.target.value)}
-                            className="w-8 bg-transparent text-center font-black text-white outline-none"
-                          />
-                          <button
-                            onClick={() => handleUpdateItem(i, 'quantity', (Number(item.quantity) || 0) + 1)}
-                            className="w-6 h-6 flex items-center justify-center text-white/50 hover:text-white transition-colors"
-                          >
-                            <MdAdd size={14} />
-                          </button>
-                        </div>
-                        <span className="hidden print:block font-bold text-center">{item.quantity}</span>
+                      {/* Qty */}
+                      <td className="p-4 text-center">
+                        <span className="font-black">{item.quantity}</span>
                       </td>
 
                       {/* Discount */}
-                      <td className="p-4">
-                        <div className="flex items-center gap-1 bg-white border-2 border-slate-100 rounded-xl px-2 py-1.5 shadow-sm no-print">
-                          <input
-                            type="number"
-                            value={item.discount}
-                            onChange={(e) => handleUpdateItem(i, 'discount', e.target.value)}
-                            className="w-full bg-transparent text-center font-black text-red-500 outline-none text-xs"
-                          />
-                          <select
-                            value={item.discountType}
-                            onChange={(e) => handleUpdateItem(i, 'discountType', e.target.value)}
-                            className="text-[9px] font-black bg-slate-100 rounded px-1 py-0.5 outline-none"
-                          >
-                            <option value="fixed">SAR</option>
-                            <option value="percentage">%</option>
-                          </select>
-                        </div>
-                        <span className="hidden print:block font-bold text-center text-red-500">
-                          {item.discount > 0 ? (item.discountType === 'percentage' ? `${item.discount}%` : formatSAR(item.discount)) : '-'}
+                      <td className="p-4 text-center">
+                        <span className="font-bold text-red-500">
+                          {item.discount > 0
+                            ? (item.discountType === 'percentage'
+                              ? `${item.discount}%`
+                              : formatSAR(item.discount))
+                            : '-'}
                         </span>
                       </td>
 
                       {/* Subtotal */}
                       <td className="p-4 text-center">
-                        <span className="font-bold text-slate-700">{formatSAR(item.totalPrice)}</span>
+                        <span className="font-bold text-slate-700">
+                          {formatSAR(item.totalPrice)}
+                        </span>
                       </td>
 
                       {/* VAT % */}
                       <td className="p-4 text-center">
-                        <span className="font-bold text-slate-600">{taxRate || 0}%</span>
-                      </td>
-
-                      {/* VAT Amount */}
-                      <td className="p-4 text-center">
-                        <span className="font-bold text-slate-600">{formatSAR(((Number(item.totalPrice) || 0) * (Number(taxRate) || 0)) / 100)}</span>
-                      </td>
-
-                      {/* Final Total */}
-                      <td className="p-4 text-right">
-                        <span className="text-lg font-black text-slate-900 tracking-tighter">
-                          {formatSAR((Number(item.totalPrice) || 0) + (((Number(item.totalPrice) || 0) * (Number(taxRate) || 0)) / 100))}
+                        <span className="font-bold text-slate-600">
+                          {taxRate || 0}%
                         </span>
                       </td>
 
-                      {/* Actions / Remove button */}
+                      {/* VAT Amt */}
+                      <td className="p-4 text-center">
+                        <span className="font-bold text-slate-600">
+                          {formatSAR(
+                            ((Number(item.totalPrice) || 0) *
+                              (Number(taxRate) || 0)) /
+                            100
+                          )}
+                        </span>
+                      </td>
+
+                      {/* Total */}
+                      <td className="p-4 text-right">
+                        <span className="text-lg font-black text-slate-900">
+                          {formatSAR(
+                            (Number(item.totalPrice) || 0) +
+                            ((Number(item.totalPrice) || 0) *
+                              (Number(taxRate) || 0)) /
+                            100
+                          )}
+                        </span>
+                      </td>
+
+                      {/* Remove */}
                       <td className="p-4 text-center no-print">
                         <button
                           onClick={() => handleRemoveItem(i)}
-                          className="w-8 h-8 flex items-center justify-center text-red-100 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          className="text-red-400 hover:text-red-600"
                         >
                           <MdDelete size={18} />
                         </button>
                       </td>
+
                     </tr>
                   ))}
+
                 </tbody>
+
               </table>
             </div>
 
