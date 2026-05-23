@@ -57,7 +57,7 @@ function SaleDetailModal({ saleId, onClose }) {
             <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : sale ? (
-          <div ref={invoiceRef} className="p-8 text-sm text-slate-800">
+          <div ref={invoiceRef} className="print-container p-8 text-sm text-slate-800">
 
             {/* ================= TITLE ================= */}
             <div className="grid grid-cols-3 items-center mb-6">

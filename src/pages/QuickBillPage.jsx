@@ -29,7 +29,7 @@ function InvoiceModal({ sale, onClose }) {
           </div>
         </div>
 
-        <div ref={invoiceRef} className="p-8 text-sm text-slate-800 bg-white">
+        <div ref={invoiceRef} className="print-container p-8 text-sm text-slate-800 bg-white">
           {/* TITLE SECTION */}
           <div className="grid grid-cols-3 items-center mb-6">
             <div className="text-left">
