@@ -148,8 +148,8 @@ function InvoiceModal({ sale: initialSale, onClose }) {
         <div className="flex-1 overflow-y-auto">
           <div
             ref={invoiceRef}
-            className="print-container p-10 text-sm text-slate-800 bg-white print:p-2"
-          >            <div className="grid grid-cols-3 items-center mb-6">
+            className="print-container p-10 text-sm text-slate-800 bg-white print:p-2">
+            {/* <div className="grid grid-cols-3 items-center mb-6">
               <div className="text-left">
                 <h1 className="text-lg font-bold">Ewan Al-Hazm Trading Establishment</h1>
                 <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
@@ -180,8 +180,68 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                   الجوال: ٠٥٩٥٧١٧٥٢٠
                 </p>
               </div>
-            </div>
+            </div> */}
 
+            <div className="w-full max-w-[210mm] mx-auto px-6 py-4 box-border overflow-hidden">
+
+              <div className="grid grid-cols-3 items-center mb-6 w-full">
+
+                {/* LEFT */}
+                <div className="text-left">
+                  <h1 className="text-lg font-bold">
+                    Ewan Al-Hazm Trading Establishment
+                  </h1>
+
+                  <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Hand Tools - Equipment - Safety - Workshop Supplies
+                  </p>
+
+                  <p className="text-xs text-slate-500">
+                    Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia
+                  </p>
+
+                  <p className="text-xs text-slate-500">
+                    Mobile: 059 571 7520
+                  </p>
+                </div>
+
+                {/* CENTER */}
+                <div className="text-center space-y-2">
+                  <h1 className="text-[30px] font-bold">
+                    TAX INVOICE
+                  </h1>
+
+                  <p className="text-slate-500 text-[20px]">
+                    فاتورة ضريبية
+                  </p>
+
+                  <p className="text-md text-slate-500">
+                    VAT No: 313147090700003
+                  </p>
+                </div>
+
+                {/* RIGHT */}
+                <div className="text-right space-y-2">
+                  <h1 className="text-[30px] font-bold leading-[1.2]">
+                    مؤسسة ايوان الحزم التجارية
+                  </h1>
+
+                  <p className="text-[20px] font-semibold text-slate-600">
+                    عدد يدوية - معدات - سلامة - لوازم ورش
+                  </p>
+
+                  <p className="text-md text-slate-500">
+                    العنوان: السعادة، الخرج، السعودية
+                  </p>
+
+                  <p className="text-md text-slate-500 tracking-[0.2em]">
+                    الجوال: ٠٥٩٥٧١٧٥٢٠
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
 
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="p-4 border rounded-lg space-y-2">
