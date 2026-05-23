@@ -57,10 +57,10 @@ function SaleDetailModal({ saleId, onClose }) {
             <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : sale ? (
-          <div ref={invoiceRef} className="print-container p-8 text-sm text-slate-800">
+          <div ref={invoiceRef} className="p-8 text-sm text-slate-800">
 
             {/* ================= TITLE ================= */}
-            <div className="grid grid-cols-3 items-center mb-6">
+            {/* <div className="grid grid-cols-3 items-center mb-6">
               <div className="text-left">
                 <h1 className="text-lg font-bold">Ewan Al-Hazm Trading Establishment</h1>
                 <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
@@ -82,6 +82,63 @@ function SaleDetailModal({ saleId, onClose }) {
                 <p className="text-xs text-slate-500">العنوان: السعادة، الخرج، السعودية</p>
                 <p className="text-xs text-slate-500">الجوال:٠٥٩٥٧١٧٥٢٠</p>
               </div>
+            </div> */}
+
+            <div className="grid grid-cols-3 items-center mb-4 px-2">
+
+              {/* LEFT SIDE (English) */}
+              <div className="text-left">
+                <h1 className="text-base font-bold leading-tight">
+                  Ewan Al-Hazm Trading Est.
+                </h1>
+
+                <p className="text-[9px] font-semibold text-slate-600 uppercase tracking-wide mb-0.5">
+                  Hand Tools - Equipment - Safety - Workshop Supplies
+                </p>
+
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia
+                </p>
+
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  Mobile: 059 571 7520
+                </p>
+              </div>
+
+              {/* CENTER TITLE */}
+              <div className="text-center px-1">
+                <h1 className="text-xl font-bold leading-tight">
+                  TAX INVOICE
+                </h1>
+
+                <p className="text-slate-500 text-xs">
+                  فاتورة ضريبية
+                </p>
+
+                <p className="text-[10px] text-slate-500">
+                  VAT No: 313147090700003
+                </p>
+              </div>
+
+              {/* RIGHT SIDE (Arabic) */}
+              <div className="text-right">
+                <h1 className="text-base font-bold leading-tight">
+                  مؤسسة ايوان الحزم التجارية
+                </h1>
+
+                <p className="text-[9px] font-semibold text-slate-600 mb-0.5 leading-tight">
+                  عدد يدوية - معدات - سلامة - لوازم ورش
+                </p>
+
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  العنوان: السعادة، الخرج، السعودية
+                </p>
+
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  الجوال: ٠٥٩٥٧١٧٥٢٠
+                </p>
+              </div>
+
             </div>
 
             {/* ================= FROM / TO ================= */}
@@ -118,7 +175,7 @@ function SaleDetailModal({ saleId, onClose }) {
             </div>
 
             {/* ================= TABLE ================= */}
-            <table className="w-full border text-xs mb-6">
+            {/* <table className="w-full border text-xs mb-6">
               <thead className="bg-slate-100">
                 <tr>
                   <th className="p-2 text-left">No / رقم</th>
@@ -149,6 +206,104 @@ function SaleDetailModal({ saleId, onClose }) {
                     <td className="p-2 text-center">{formatSAR((item.totalPrice * (sale.taxRate || 0)) / 100)}</td>
                     <td className="p-2 text-center font-semibold">
                       {formatSAR(item.totalPrice + ((item.totalPrice * (sale.taxRate || 0)) / 100))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table> */}
+
+
+            <table className="w-full border text-[11px] mb-6 table-fixed">
+              <thead className="bg-slate-100">
+                <tr>
+                  <th className="p-1 w-[4%] text-left">No / رقم</th>
+
+                  {/* PRODUCT COLUMN - BIGGER */}
+                  <th className="p-1 w-[28%] text-left">
+                    Product / المنتج
+                  </th>
+
+                  <th className="p-1 w-[8%] text-center">
+                    Unit / الوحدة
+                  </th>
+
+                  <th className="p-1 w-[10%] text-center">
+                    Unit Price / سعر الوحدة
+                  </th>
+
+                  <th className="p-1 w-[6%] text-center">
+                    Qty / الكمية
+                  </th>
+
+                  <th className="p-1 w-[8%] text-center">
+                    Disc / خصم
+                  </th>
+
+                  <th className="p-1 w-[10%] text-center">
+                    Subtotal / الإجمالي
+                  </th>
+
+                  <th className="p-1 w-[6%] text-center">
+                    VAT %
+                  </th>
+
+                  <th className="p-1 w-[10%] text-center">
+                    VAT Amt
+                  </th>
+
+                  <th className="p-1 w-[10%] text-center">
+                    Total
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {sale.items.map((item, i) => (
+                  <tr key={i} className="border-t">
+                    <td className="p-1 text-center">{i + 1}</td>
+
+                    {/* PRODUCT CELL - BETTER SPACING */}
+                    <td className="p-1 text-left whitespace-normal break-words">
+                      {item.productName}
+                    </td>
+
+                    <td className="p-1 text-center font-bold text-slate-600">
+                      {item.selectedUnit || 'Unit'}
+                    </td>
+
+                    <td className="p-1 text-center">
+                      {formatSAR(item.unitPrice)}
+                    </td>
+
+                    <td className="p-1 text-center">
+                      {item.quantity}
+                    </td>
+
+                    <td className="p-1 text-center text-red-500">
+                      {item.discount > 0
+                        ? (item.discountType === 'percentage'
+                          ? `${item.discount}%`
+                          : formatSAR(item.discount))
+                        : '-'}
+                    </td>
+
+                    <td className="p-1 text-center">
+                      {formatSAR(item.totalPrice)}
+                    </td>
+
+                    <td className="p-1 text-center">
+                      {sale.taxRate || 0}%
+                    </td>
+
+                    <td className="p-1 text-center">
+                      {formatSAR((item.totalPrice * (sale.taxRate || 0)) / 100)}
+                    </td>
+
+                    <td className="p-1 text-center font-semibold">
+                      {formatSAR(
+                        item.totalPrice +
+                        ((item.totalPrice * (sale.taxRate || 0)) / 100)
+                      )}
                     </td>
                   </tr>
                 ))}
