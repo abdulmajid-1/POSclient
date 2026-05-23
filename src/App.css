@@ -243,4 +243,32 @@
   .flex {
     display: flex !important;
   }
+
+  /* Invoice Header layout under print */
+  .print-container .grid-cols-3.items-center.mb-6 {
+    display: grid !important;
+    grid-template-columns: 40% 20% 40% !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  /* Invoice Header typography scaling */
+  .print-container .grid-cols-3.items-center.mb-6 h1 {
+    font-size: 14pt !important;
+    line-height: 1.2 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .print-container .grid-cols-3.items-center.mb-6 p {
+    font-size: 8pt !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Center "TAX INVOICE" header scaling */
+  .print-container .grid-cols-3.items-center.mb-6 .text-center h1 {
+    font-size: 16pt !important;
+    font-weight: 800 !important;
+  }
 }
