@@ -272,7 +272,7 @@ export default function SalesPage() {
 
   const sales = data?.sales || [];
   const total = data?.total || 0;
-  const totalPages = data?.totalPages || 1;
+  const totalPages = data?.totalPages || Math.ceil(total / limit) || 1;
 
   const ranges = [
     { key: 'daily', label: 'Daily' },
