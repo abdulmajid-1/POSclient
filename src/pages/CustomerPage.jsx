@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-    getCustomers, 
-    createCustomer, 
-    updateCustomer, 
-    deleteCustomer 
+import {
+    getCustomers,
+    createCustomer,
+    updateCustomer,
+    deleteCustomer
 } from '../services/customerService';
-import { 
-    MdSearch, 
-    MdAdd, 
-    MdClose, 
-    MdEdit, 
-    MdDelete, 
+import {
+    MdSearch,
+    MdAdd,
+    MdClose,
+    MdEdit,
+    MdDelete,
     MdHistory,
     MdPerson
 } from 'react-icons/md';
@@ -60,54 +60,54 @@ function CustomerModal({ customer, onClose, onSaved }) {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="label text-xs font-bold uppercase text-slate-500">Customer Name *</label>
-                        <input 
-                            type="text" 
-                            className="input" 
-                            required 
-                            value={form.name} 
-                            onChange={e => setForm({ ...form, name: e.target.value })} 
+                        <input
+                            type="text"
+                            className="input"
+                            required
+                            value={form.name}
+                            onChange={e => setForm({ ...form, name: e.target.value })}
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="label text-xs font-bold uppercase text-slate-500">Phone</label>
-                            <input 
-                                type="text" 
-                                className="input" 
-                                value={form.phone} 
-                                onChange={e => setForm({ ...form, phone: e.target.value })} 
+                            <input
+                                type="text"
+                                className="input"
+                                value={form.phone}
+                                onChange={e => setForm({ ...form, phone: e.target.value })}
                             />
                         </div>
                         <div>
                             <label className="label text-xs font-bold uppercase text-slate-500">VAT Number</label>
-                            <input 
-                                type="text" 
-                                className="input" 
-                                value={form.vatNumber} 
-                                onChange={e => setForm({ ...form, vatNumber: e.target.value })} 
+                            <input
+                                type="text"
+                                className="input"
+                                value={form.vatNumber}
+                                onChange={e => setForm({ ...form, vatNumber: e.target.value })}
                             />
                         </div>
                     </div>
                     <div>
                         <label className="label text-xs font-bold uppercase text-slate-500">Email</label>
-                        <input 
-                            type="email" 
-                            className="input" 
-                            value={form.email} 
-                            onChange={e => setForm({ ...form, email: e.target.value })} 
+                        <input
+                            type="email"
+                            className="input"
+                            value={form.email}
+                            onChange={e => setForm({ ...form, email: e.target.value })}
                         />
                     </div>
                     <div>
                         <label className="label text-xs font-bold uppercase text-slate-500">Address</label>
-                        <textarea 
-                            className="input min-h-[80px]" 
-                            value={form.address} 
-                            onChange={e => setForm({ ...form, address: e.target.value })} 
+                        <textarea
+                            className="input min-h-[80px]"
+                            value={form.address}
+                            onChange={e => setForm({ ...form, address: e.target.value })}
                         />
                     </div>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={loading}
                         className="btn-primary w-full py-3 text-lg mt-4"
                     >
@@ -161,7 +161,7 @@ export default function CustomerPage() {
                     <h1 className="text-2xl font-bold text-slate-800">Customer Management</h1>
                     <p className="text-slate-500 text-sm">Manage your client database and view their history.</p>
                 </div>
-                <button 
+                <button
                     onClick={() => setModal({ type: 'add' })}
                     className="bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 active:scale-95"
                 >
@@ -174,9 +174,9 @@ export default function CustomerPage() {
             <div className="card p-4">
                 <div className="relative">
                     <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                    <input 
-                        type="text" 
-                        placeholder="Search by name or phone number..." 
+                    <input
+                        type="text"
+                        placeholder="Search by name or phone number..."
                         className="input pl-12 bg-slate-50 border-none"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -215,7 +215,7 @@ export default function CustomerPage() {
                                                 {c.name.charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <button 
+                                                <button
                                                     onClick={() => navigate(`/customers/${c._id}/history`)}
                                                     className="font-bold text-slate-800 hover:text-primary-600 transition-colors block text-left"
                                                 >
@@ -232,6 +232,7 @@ export default function CustomerPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex gap-4">
                                             <div>
+                                                {console.log(c)}
                                                 <p className="text-[10px] uppercase font-bold text-slate-400">Purchases</p>
                                                 <p className="text-sm font-bold text-slate-700">{c.totalPurchases || 0}</p>
                                             </div>
@@ -247,19 +248,19 @@ export default function CustomerPage() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2">
-                                            <button 
+                                            <button
                                                 onClick={() => navigate(`/customers/${c._id}/history`)}
                                                 className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all text-xs font-bold shadow-sm"
                                             >
                                                 History
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => setModal({ type: 'edit', data: c })}
                                                 className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all text-xs font-bold shadow-sm"
                                             >
                                                 Edit
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleDelete(c._id)}
                                                 className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all text-xs font-bold shadow-sm"
                                             >
@@ -276,16 +277,16 @@ export default function CustomerPage() {
 
             {/* Modals */}
             {modal?.type === 'add' && (
-                <CustomerModal 
-                    onClose={() => setModal(null)} 
-                    onSaved={fetchCustomers} 
+                <CustomerModal
+                    onClose={() => setModal(null)}
+                    onSaved={fetchCustomers}
                 />
             )}
             {modal?.type === 'edit' && (
-                <CustomerModal 
-                    customer={modal.data} 
-                    onClose={() => setModal(null)} 
-                    onSaved={fetchCustomers} 
+                <CustomerModal
+                    customer={modal.data}
+                    onClose={() => setModal(null)}
+                    onSaved={fetchCustomers}
                 />
             )}
         </div>

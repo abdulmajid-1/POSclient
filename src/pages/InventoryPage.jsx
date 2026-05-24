@@ -1,23 +1,93 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProducts } from '../hooks/useProducts';
-import { createProduct, updateProduct, deleteProduct } from '../services/productService';
+import { createProduct, updateProduct, deleteProduct, getProducts } from '../services/productService';
 import { getSuppliers, createSupplier } from "../services/supplierService";
 import { getCategories, createCategory } from "../services/categoryService";
 import { MdAdd, MdSearch, MdClose, MdInventory2 } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { TableSkeleton } from '../components/SkeletonLoader';
 
-const CATEGORIES = ['Electronics', 'Stationery', 'Hardware', 'Other'];
 const EMPTY_FORM = { name: '', sku: '', category: '', purchasePrice: '', salePrice: '', quantity: '', lowStockThreshold: 10, supplier: '', description: '', baseUnit: 'unit', units: [] };
-let searchText = "";
 
+// ── Reusable searchable select ──────────────────────────────────────────────
+function SearchableSelect({ label, options, value, onChange, required, placeholder = 'Select...' }) {
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
+  const filtered = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+  const selected = options.find(o => o.value === value);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="label">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="input w-full flex items-center justify-between text-left"
+      >
+        <span className={selected ? 'text-slate-800 font-medium' : 'text-slate-400'}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <svg className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-[200] w-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="p-2 border-b border-slate-100">
+            <div className="relative">
+              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-primary-400 bg-slate-50"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+          <div className="max-h-52 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <div className="p-4 text-center text-slate-400 text-sm">No results</div>
+            ) : filtered.map(o => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => { onChange(o.value); setOpen(false); setSearch(''); }}
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-primary-50 transition-colors flex items-center justify-between ${value === o.value ? 'bg-primary-50 font-bold text-primary-700' : 'text-slate-700'}`}
+              >
+                {o.label}
+                {value === o.value && (
+                  <svg className="w-4 h-4 text-primary-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Product Modal ───────────────────────────────────────────────────────────
 function ProductModal({ product, onClose, onSaved }) {
   const [suppliers, setSuppliers] = useState([]);
-  const [newSupplier, setNewSupplier] = useState("");
+  const [newSupplier, setNewSupplier] = useState('');
   const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState("");
+  const [newCategory, setNewCategory] = useState('');
   const [form, setForm] = useState(() => {
     if (product) {
       return {
@@ -33,290 +103,350 @@ function ProductModal({ product, onClose, onSaved }) {
   const [loading, setLoading] = useState(false);
   const isEdit = !!product?._id;
 
-  const field = (label, key, type = 'text', required = false) => (
-    <div key={key}>
-      <label className="label">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
-      <input type={type} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-        className="input" required={required} min={type === 'number' ? 0 : undefined} step={type === 'number' ? 'any' : undefined} />
-    </div>
-  );
+  // ── Suggestions & Templates ──
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentProducts, setRecentProducts] = useState([]);
+  const suggestRef = useRef(null);
 
+  useEffect(() => {
+    const handler = (e) => { if (suggestRef.current && !suggestRef.current.contains(e.target)) setShowSuggestions(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-  // 🔥 LOAD CATEGORIES and SUPPLIERS FROM BACKEND
+  useEffect(() => {
+    if (isEdit) return;
+    const fetchRecent = async () => {
+      try {
+        const res = await getProducts({ limit: 5 });
+        setRecentProducts(res.data.products || []);
+      } catch {}
+    };
+    fetchRecent();
+  }, [isEdit]);
+
+  useEffect(() => {
+    if (!form.name || form.name.length < 2 || isEdit) { setSuggestions([]); return; }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await getProducts({ search: form.name, limit: 8 });
+        const list = res.data.products || [];
+        setSuggestions(list);
+        setShowSuggestions(list.length > 0);
+      } catch {}
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [form.name, isEdit]);
+
+  const handleSuggestionSelect = (p) => {
+    setForm({
+      name: p.name || '',
+      sku: p.sku || '',
+      category: p.category?._id || p.category || '',
+      supplier: p.supplier?._id || p.supplier || '',
+      purchasePrice: p.purchasePrice ?? '',
+      salePrice: p.salePrice ?? '',
+      baseUnit: p.baseUnit || 'unit',
+      units: (p.units || []).map(u => ({ name: u.name, unitsPerBase: u.unitsPerBase, sellingPrice: u.sellingPrice })),
+      description: p.description || '',
+      lowStockThreshold: p.lowStockThreshold ?? 10,
+      quantity: '',   // intentionally blank — user must enter new stock qty
+    });
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // Load categories + suppliers
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [catRes, supRes] = await Promise.all([
-          getCategories(),
-          getSuppliers(),
-        ]);
-
+        const [catRes, supRes] = await Promise.all([getCategories(), getSuppliers()]);
         setCategories(catRes.data.data);
         setSuppliers(supRes.data.data);
-      } catch (err) {
-        console.log(err);
-      }
+      } catch {}
     };
-
     loadData();
   }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!form.name || !form.sku || !form.category || !form.salePrice)
-      return toast.error("Fill required fields");
-
+    if (!form.name || !form.sku || !form.category || !form.salePrice) return toast.error('Fill required fields');
     setLoading(true);
-
     try {
       if (isEdit) await updateProduct(product._id, form);
       else await createProduct(form);
-
-      toast.success(`Product ${isEdit ? "updated" : "created"} successfully`);
+      toast.success(`Product ${isEdit ? 'updated' : 'created'} successfully`);
       onSaved();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Operation failed");
-    } finally {
-      setLoading(false);
-    }
+      toast.error(err.response?.data?.message || 'Operation failed');
+    } finally { setLoading(false); }
   };
 
-  const handleAddUnit = () => {
-    setForm({ ...form, units: [...form.units, { name: '', unitsPerBase: 1, sellingPrice: 0 }] });
-  };
-
+  const handleAddUnit = () => setForm({ ...form, units: [...form.units, { name: '', unitsPerBase: 1, sellingPrice: 0 }] });
   const handleUpdateUnit = (index, field, value) => {
-    const newUnits = [...form.units];
-    newUnits[index][field] = value;
-    setForm({ ...form, units: newUnits });
+    const u = [...form.units]; u[index][field] = value; setForm({ ...form, units: u });
+  };
+  const handleRemoveUnit = (index) => setForm({ ...form, units: form.units.filter((_, i) => i !== index) });
+
+  const catOptions = categories.map(c => ({ value: c._id, label: c.name }));
+  const supOptions = suppliers.map(s => ({ value: s._id, label: s.name }));
+
+  const addCat = async () => {
+    const v = newCategory.trim(); if (!v) return;
+    try {
+      const res = await createCategory({ name: v });
+      const nc = res.data.data;
+      setCategories(prev => [...prev, nc]);
+      setForm(f => ({ ...f, category: nc._id }));
+      setNewCategory('');
+      toast.success('Category added');
+    } catch { toast.error('Failed to add category'); }
   };
 
-  const handleRemoveUnit = (index) => {
-    setForm({ ...form, units: form.units.filter((_, i) => i !== index) });
+  const addSup = async () => {
+    const v = newSupplier.trim(); if (!v) return;
+    try {
+      const res = await createSupplier({ name: v });
+      const ns = res.data.data;
+      setSuppliers(prev => [...prev, ns]);
+      setForm(f => ({ ...f, supplier: ns._id }));
+      setNewSupplier('');
+      toast.success('Supplier added');
+    } catch { toast.error('Failed to add supplier'); }
   };
+
+  const hasRecent = !isEdit && recentProducts.length > 0;
+  const hasSimilar = !isEdit && suggestions.length > 0;
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-box">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800">
-            {isEdit ? "Edit Product" : "Add New Product"}
-          </h2>
+      <div className="modal-box !max-w-7xl w-full !rounded-3xl overflow-hidden flex flex-col shadow-2xl animate-scale-up" style={{ maxHeight: '92vh' }}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-slate-50/60 shrink-0">
+          <div>
+            <h2 className="text-2xl font-black text-slate-800">{isEdit ? 'Edit Product' : 'Add New Product'}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{isEdit ? 'Update product details below' : 'Starred fields are required. Focus or search to use recent products as a template.'}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500"><MdClose size={24} /></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Scrollable body */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
+          <div className="p-8 grid grid-cols-4 gap-x-6 gap-y-5 flex-1">
 
-          {/* NAME + SKU */}
-          <div className="grid grid-cols-2 gap-4">
-            {field('Product Name', 'name', 'text', true)}
-            {field('SKU / Product Code', 'sku', 'text', true)}
-          </div>
+            {/* ── Product Name (full width) + suggestions ── */}
+            <div className="col-span-4" ref={suggestRef}>
+              <label className="label font-bold text-slate-700">Product Name <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => {
+                    setForm({ ...form, name: e.target.value });
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  className="input w-full font-bold text-slate-800"
+                  placeholder="e.g. Stanley Screwdriver 8in"
+                  required
+                  autoFocus={!isEdit}
+                />
 
-          {/* CATEGORY */}
-          <div>
-            <label className="label">
-              Category <span className="text-red-500">*</span>
-            </label>
-
-            <select
-              value={form.category}
-              onChange={(e) =>
-                setForm({ ...form, category: e.target.value })
-              }
-              className="input"
-              required
-            >
-              <option value="">Select category</option>
-
-              {categories.map((c) => (
-                <option key={c._id} value={c._id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-
-            {/* ADD CATEGORY */}
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                placeholder="Add new category"
-                className="input"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-              />
-
-              <button
-                type="button"
-                className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-4 py-2"
-                onClick={async () => {
-                  const value = newCategory.trim();
-                  if (!value) return;
-
-                  try {
-                    // 🔥 REAL BACKEND CALL (THIS WAS MISSING)
-                    const res = await createCategory({
-                      name: value,
-                    });
-
-                    const newCat = res.data.data;
-
-                    // update dropdown
-                    setCategories((prev) => [...prev, newCat]);
-
-                    // auto select
-                    setForm({ ...form, category: newCat._id });
-
-                    setNewCategory("");
-                    toast.success("Category added");
-                  } catch (err) {
-                    toast.error("Failed to add category");
-                  }
-                }}
-              >
-                + Add
-              </button>
-            </div>
-          </div>
-
-          {/* PRICES */}
-          <div className="grid grid-cols-2 gap-4">
-            {field('Purchase Price (SAR)', 'purchasePrice', 'number', true)}
-            {field('Sale Price (SAR)', 'salePrice', 'number', true)}
-          </div>
-
-          {/* QUANTITY AND BASE UNIT */}
-          <div className="grid grid-cols-2 gap-4">
-            {field('Stock Quantity (in Base Unit)', 'quantity', 'number', true)}
-            {field('Base Unit (e.g. roll, box)', 'baseUnit', 'text', true)}
-            {field('Low Stock Threshold', 'lowStockThreshold', 'number')}
-          </div>
-
-          {/* DYNAMIC SELLABLE UNITS */}
-          <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="label mb-0">Sellable Units (Optional)</label>
-              <button type="button" onClick={handleAddUnit} className="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded hover:bg-primary-100">
-                + Add Unit
-              </button>
+                {!isEdit && showSuggestions && (hasSimilar || hasRecent) && (
+                  <div className="absolute z-[200] w-full mt-1 bg-white border border-primary-200 rounded-2xl shadow-2xl overflow-hidden">
+                    <div className="px-4 py-2.5 bg-primary-50 border-b border-primary-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MdSearch size={14} className="text-primary-500" />
+                        <span className="text-[10px] font-black text-primary-700 uppercase tracking-widest">
+                          {hasSimilar ? "Similar Products (Search Matches)" : "Recently Added Templates"}
+                        </span>
+                      </div>
+                      <span className="text-[9px] text-slate-400 font-bold">Click to auto-fill as template</span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto divide-y divide-slate-50">
+                      {(hasSimilar ? suggestions : recentProducts).map(p => (
+                        <button
+                          key={p._id}
+                          type="button"
+                          onClick={() => handleSuggestionSelect(p)}
+                          className="w-full text-left px-4 py-3 hover:bg-primary-50 transition-all group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-bold text-slate-800 text-sm group-hover:text-primary-700">{p.name}</p>
+                              <div className="flex items-center gap-3 mt-0.5">
+                                <span className="text-[10px] text-slate-400 font-bold">SKU: {p.sku}</span>
+                                {p.category?.name && <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded font-bold text-slate-500">{p.category.name}</span>}
+                                <span className="text-[10px] font-black text-emerald-600">SAR {Number(p.salePrice).toLocaleString()}</span>
+                                <span className="text-[10px] text-slate-400">Cost: SAR {Number(p.purchasePrice || 0).toLocaleString()}</span>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-black text-primary-600 bg-primary-100 px-2 py-1 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              Apply Template ↵
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {!isEdit && <p className="text-[10px] text-slate-400 mt-1.5">💡 Focus/type to see suggestions & recent products. Selecting one auto-fills the form for quick adjustment.</p>}
             </div>
 
-            {form.units.length === 0 && (
-              <p className="text-xs text-slate-500">No alternate units. Product will be sold only in its base unit.</p>
-            )}
+            {/* SKU */}
+            <div className="col-span-2">
+              <label className="label font-bold text-slate-700">SKU / Product Code <span className="text-red-500">*</span></label>
+              <input type="text" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} className="input font-bold" placeholder="e.g. STAN-SD-8IN" required />
+            </div>
 
-            {form.units.map((u, i) => (
-              <div key={i} className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Sub Unit Name</label>
-                  <input type="text" value={u.name} onChange={(e) => handleUpdateUnit(i, 'name', e.target.value)} className="input text-xs py-1.5" placeholder="e.g. meter" required />
-                </div>
-                <div className="w-24">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">{u.name} in {form.baseUnit}</label>
-                  <input type="number" value={u.unitsPerBase} onChange={(e) => handleUpdateUnit(i, 'unitsPerBase', Number(e.target.value))} className="input text-xs py-1.5" min="0.01" step="any" required />
-                </div>
-                <div className="w-24">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Price per {u.name}</label>
-                  <input type="number" value={u.sellingPrice} onChange={(e) => handleUpdateUnit(i, 'sellingPrice', Number(e.target.value))} className="input text-xs py-1.5" min="0" step="any" required />
-                </div>
+            {/* Base Unit */}
+            <div className="col-span-2">
+              <label className="label font-bold text-slate-700">Base Unit <span className="text-red-500">*</span></label>
+              <input type="text" value={form.baseUnit} onChange={(e) => setForm({ ...form, baseUnit: e.target.value })} className="input font-bold" placeholder="e.g. piece, roll, box" required />
+            </div>
 
+            {/* Category selection */}
+            <div className="col-span-2">
+              <SearchableSelect label="Category" required placeholder="Search & select category..." options={catOptions} value={form.category} onChange={(v) => setForm({ ...form, category: v })} />
+              <div className="mt-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">+ Create New Category</label>
+                <div className="flex gap-2">
+                  <input type="text" placeholder="Category name" className="input text-xs py-1.5 flex-1 bg-white" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCat())} />
+                  <button type="button" onClick={addCat} className="px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs rounded-lg transition-all whitespace-nowrap">+ Add</button>
+                </div>
+              </div>
+            </div>
 
-                <button type="button" onClick={() => handleRemoveUnit(i)} className="p-2 bg-red-50 text-red-500 rounded hover:bg-red-100 mb-[2px]">
-                  <MdClose size={14} />
+            {/* Supplier selection */}
+            <div className="col-span-2">
+              <SearchableSelect label="Supplier" placeholder="Search & select supplier..." options={supOptions} value={form.supplier} onChange={(v) => setForm({ ...form, supplier: v })} />
+              <div className="mt-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">+ Create New Supplier</label>
+                <div className="flex gap-2">
+                  <input type="text" placeholder="Supplier name" className="input text-xs py-1.5 flex-1 bg-white" value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSup())} />
+                  <button type="button" onClick={addSup} className="px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs rounded-lg transition-all whitespace-nowrap">+ Add</button>
+                </div>
+              </div>
+            </div>
+
+            {/* Purchase Price */}
+            <div className="col-span-1">
+              <label className="label font-bold text-slate-700">Purchase Cost (SAR) <span className="text-red-500">*</span></label>
+              <input type="number" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} className="input font-black text-primary-600" min={0} step="any" required />
+            </div>
+
+            {/* Sale Price */}
+            <div className="col-span-1">
+              <label className="label font-bold text-slate-700">Selling Price (SAR) <span className="text-red-500">*</span></label>
+              <input type="number" value={form.salePrice} onChange={(e) => setForm({ ...form, salePrice: e.target.value })} className="input font-black text-emerald-600" min={0} step="any" required />
+            </div>
+
+            {/* Quantity */}
+            <div className="col-span-1">
+              <label className="label font-bold text-slate-700">Stock Quantity <span className="text-red-500">*</span></label>
+              <input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className="input font-bold" min={0} step="any" required placeholder="0" />
+            </div>
+
+            {/* Low Stock Threshold */}
+            <div className="col-span-1">
+              <label className="label font-bold text-slate-700">Alert Threshold</label>
+              <input type="number" value={form.lowStockThreshold} onChange={(e) => setForm({ ...form, lowStockThreshold: e.target.value })} className="input" min={0} />
+            </div>
+
+            {/* Description — full width */}
+            <div className="col-span-4">
+              <label className="label font-bold text-slate-700">Description</label>
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="input resize-none h-20 font-medium" placeholder="Optional product description..." />
+            </div>
+
+            {/* Sellable Units — full width */}
+            <div className="col-span-4 border border-slate-200 rounded-2xl p-5 bg-slate-50/50 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="label mb-0 font-bold text-slate-800">Alternate Sellable Units <span className="text-slate-400 font-normal">(Optional)</span></label>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Specify alternate quantities and pricing (e.g. roll vs meters, box vs pieces)</p>
+                </div>
+                <button type="button" onClick={handleAddUnit} className="flex items-center gap-1.5 text-xs font-black text-primary-600 bg-primary-50 px-3 py-2 rounded-xl hover:bg-primary-100 border border-primary-100 transition-all">
+                  <MdAdd size={15} /> Add Alternate Unit
                 </button>
               </div>
-            ))}
-            {form.units.length > 0 && form.baseUnit && (
-              <div className="text-[11px] text-slate-500 bg-white p-2 rounded border border-slate-100">
-                Example conversion: 1 <span className="font-bold">{form.baseUnit}</span> = <span className="font-bold">{form.units[0]?.unitsPerBase || '?'} {form.units[0]?.name || '?'}</span>
-              </div>
-            )}
-          </div>
 
-          {/* {field('Supplier', 'supplier')} */}
-
-          <div>
-            <label className="label">Supplier</label>
-
-            {/* dropdown */}
-            <select
-              value={form.supplier}
-              onChange={(e) =>
-                setForm({ ...form, supplier: e.target.value })
-              }
-              className="input"
-            >
-              <option value="">Select supplier</option>
-
-              {suppliers.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-
-            {/* add supplier */}
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                placeholder="Add new supplier"
-                className="input"
-                value={newSupplier}
-                onChange={(e) => setNewSupplier(e.target.value)}
-              />
-              <button
-                type="button"
-                className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-4 py-2"
-                onClick={async () => {
-                  const value = newSupplier.trim();
-                  if (!value) return;
-
-                  try {
-                    const res = await createSupplier({
-                      name: value,
-                    });
-
-                    const newSup = res.data.data;
-
-                    setSuppliers((prev) => [...prev, newSup]);
-
-                    setForm({ ...form, supplier: newSup._id });
-
-                    setNewSupplier("");
-
-                    toast.success("Supplier added");
-                  } catch (err) {
-                    toast.error("Failed to add supplier");
-                  }
-                }}
-              >
-                + Add
-              </button>
+              {form.units.length > 0 ? (
+                <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                  {form.units.map((unit, idx) => (
+                    <div key={idx} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm animate-fade-in">
+                      <div className="flex-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Unit Name</label>
+                        <input
+                          type="text"
+                          value={unit.name}
+                          placeholder="e.g. Box, Dozen"
+                          onChange={(e) => handleUpdateUnit(idx, 'name', e.target.value)}
+                          className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-bold"
+                          required
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Units per Base ({form.baseUnit || 'unit'})</label>
+                        <input
+                          type="number"
+                          value={unit.unitsPerBase}
+                          placeholder="e.g. 12"
+                          onChange={(e) => handleUpdateUnit(idx, 'unitsPerBase', Number(e.target.value))}
+                          className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-bold"
+                          min={0.001}
+                          step="any"
+                          required
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Selling Price (SAR)</label>
+                        <input
+                          type="number"
+                          value={unit.sellingPrice}
+                          placeholder="e.g. 150"
+                          onChange={(e) => handleUpdateUnit(idx, 'sellingPrice', Number(e.target.value))}
+                          className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-black text-emerald-600"
+                          min={0}
+                          step="any"
+                          required
+                        />
+                      </div>
+                      <button type="button" onClick={() => handleRemoveUnit(idx)} className="text-red-400 hover:text-red-600 transition-colors p-1.5 hover:bg-red-50 rounded-lg self-end">
+                        <MdClose size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center text-xs text-slate-400 bg-white border border-dashed rounded-xl font-medium">
+                  No alternate units defined. The product will only sell in base units ({form.baseUnit || 'unit'}).
+                </div>
+              )}
             </div>
+
           </div>
 
-          <div>
-            <label className="label">Description</label>
-            <textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              className="input resize-none"
-              rows={2}
-            />
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1">
+          {/* Action buttons */}
+          <div className="flex gap-4 p-8 border-t bg-slate-50/50 shrink-0">
+            <button type="button" onClick={onClose} className="btn-secondary flex-1 py-3.5 rounded-2xl justify-center font-bold">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="btn-primary flex-1">
-              {loading ? "Saving..." : isEdit ? "Update Product" : "Add Product"}
+            <button type="submit" disabled={loading} className="btn-primary flex-1 py-3.5 rounded-2xl justify-center font-black shadow-lg">
+              {loading ? (
+                <span className="flex items-center gap-2 justify-center">
+                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  Saving...
+                </span>
+              ) : isEdit ? "Update Product" : "Add Product"}
             </button>
           </div>
         </form>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }
 

@@ -726,9 +726,9 @@ export default function POSPage() {
     } catch (err) { toast.error(err.response?.data?.message || 'Sale failed'); }
     finally { setLoading(false); }
   };
-
   const handleCustomerSelect = (selectedCustomer) => {
     setCustomer({
+      _id: selectedCustomer._id,
       name: selectedCustomer.name,
       phone: selectedCustomer.phone || '',
       vatNumber: selectedCustomer.vatNumber || ''
@@ -953,7 +953,7 @@ export default function POSPage() {
               <label className="label text-[11px] font-bold mb-1 text-slate-700">Customer Name</label>
               <input
                 value={customer.name}
-                onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                onChange={(e) => setCustomer({ ...customer, _id: undefined, name: e.target.value })}
                 className="input text-sm py-2 font-medium"
                 placeholder="Name"
               />
@@ -962,7 +962,7 @@ export default function POSPage() {
               <label className="label text-[11px] font-bold mb-1 text-slate-700">Phone Number</label>
               <input
                 value={customer.phone}
-                onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                onChange={(e) => setCustomer({ ...customer, _id: undefined, phone: e.target.value })}
                 className="input text-sm py-2"
                 placeholder="Phone"
               />
@@ -974,7 +974,7 @@ export default function POSPage() {
               <label className="label text-[11px] font-bold mb-1 text-slate-700">VAT Number</label>
               <input
                 value={customer.vatNumber}
-                onChange={(e) => setCustomer({ ...customer, vatNumber: e.target.value })}
+                onChange={(e) => setCustomer({ ...customer, _id: undefined, vatNumber: e.target.value })}
                 className="input text-sm py-2"
                 placeholder="VAT Number"
               />

@@ -227,7 +227,7 @@ export default function QuickBillPage() {
   };
 
   const handleCustomerSelect = (c) => {
-    setCustomer({ name: c.name, phone: c.phone || '', vatNumber: c.vatNumber || '' });
+    setCustomer({ _id: c._id, name: c.name, phone: c.phone || '', vatNumber: c.vatNumber || '' });
     setShowCustomerSelector(false);
   };
 
@@ -365,7 +365,7 @@ export default function QuickBillPage() {
                 <div className="relative">
                   <input
                     value={customer.name}
-                    onChange={e => setCustomer({ ...customer, name: e.target.value })}
+                    onChange={e => setCustomer({ ...customer, _id: undefined, name: e.target.value })}
                     className="w-full pl-4 pr-12 py-3 bg-slate-50 border-none rounded-2xl font-black text-slate-800 focus:ring-2 focus:ring-primary-500 transition-all"
                     placeholder="Walk-in Customer"
                   />
@@ -378,7 +378,7 @@ export default function QuickBillPage() {
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile Number</label>
                 <input
                   value={customer.phone}
-                  onChange={e => setCustomer({ ...customer, phone: e.target.value })}
+                  onChange={e => setCustomer({ ...customer, _id: undefined, phone: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl font-bold text-slate-800 focus:ring-2 focus:ring-primary-500 transition-all"
                   placeholder="05x..."
                 />
@@ -387,7 +387,7 @@ export default function QuickBillPage() {
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">VAT Number</label>
                 <input
                   value={customer.vatNumber}
-                  onChange={e => setCustomer({ ...customer, vatNumber: e.target.value })}
+                  onChange={e => setCustomer({ ...customer, _id: undefined, vatNumber: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl font-bold text-slate-800 focus:ring-2 focus:ring-primary-500 transition-all"
                   placeholder="31xx..."
                 />
