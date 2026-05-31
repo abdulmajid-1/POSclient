@@ -381,8 +381,10 @@ function calculateDates(type, startDate, endDate) {
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   } else if (type === 'custom') {
+    if (!startDate || !endDate) return null; // incomplete — caller must guard
     const s = new Date(startDate + 'T00:00:00');
     const e = new Date(endDate + 'T23:59:59');
+    if (isNaN(s) || isNaN(e)) return null;
     return { start: s.toISOString(), end: e.toISOString() };
   }
 
@@ -415,6 +417,7 @@ export default function SalesPage() {
   useEffect(() => { setPage(1); }, [rangeType, startDate, endDate]);
 
   const dates = calculateDates(rangeType, startDate, endDate);
+  const customIncomplete = rangeType === 'custom' && (!startDate || !endDate || !dates);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['sales', debouncedSearch, rangeType, startDate, endDate, page],
@@ -423,6 +426,7 @@ export default function SalesPage() {
         .then((r) => r.data),
     staleTime: 30_000,
     placeholderData: (prev) => prev,
+    enabled: !customIncomplete,
   });
 
   const sales = data?.sales || [];
@@ -487,7 +491,12 @@ export default function SalesPage() {
       </div>
 
       <div className="card p-0">
-        {isLoading ? (
+        {customIncomplete ? (
+          <div className="flex flex-col items-center py-16 text-slate-400">
+            <MdHistory size={48} className="opacity-30 mb-3" />
+            <p className="font-medium">Select both From and To dates, then click Apply</p>
+          </div>
+        ) : isLoading ? (
           <TableSkeleton rows={8} cols={9} />
         ) : sales.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-slate-400"><MdHistory size={48} className="opacity-30 mb-3" /><p>No sales found</p></div>
