@@ -4,8 +4,9 @@ import { useProducts } from '../hooks/useProducts';
 import { createProduct, updateProduct, deleteProduct, getProducts } from '../services/productService';
 import { getSuppliers, createSupplier } from "../services/supplierService";
 import { getCategories, createCategory } from "../services/categoryService";
-import { MdAdd, MdSearch, MdClose, MdInventory2 } from 'react-icons/md';
+import { MdAdd, MdSearch, MdClose, MdInventory2, MdWarning } from 'react-icons/md';
 import toast from 'react-hot-toast';
+import { getLowStockProducts } from '../services/productService';
 import { TableSkeleton } from '../components/SkeletonLoader';
 
 const EMPTY_FORM = { name: '', sku: '', category: '', purchasePrice: '', salePrice: '', quantity: '', lowStockThreshold: 10, supplier: '', description: '', baseUnit: 'unit', units: [] };
@@ -456,6 +457,8 @@ export default function InventoryPage() {
   const debounceRef = useRef(null);
   const [catFilter, setCatFilter] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
+  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [lowStockCount, setLowStockCount] = useState(null);
   const [modal, setModal] = useState(null);
   const [page, setPage] = useState(1);
   const limit = 20;
@@ -472,8 +475,15 @@ export default function InventoryPage() {
     return () => clearTimeout(debounceRef.current);
   }, [search]);
 
+  // Fetch low stock count for badge
+  useEffect(() => {
+    getLowStockProducts()
+      .then((r) => setLowStockCount(r.data.count ?? r.data.products?.length ?? 0))
+      .catch(() => {});
+  }, []);
+
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [catFilter, supplierFilter]);
+  useEffect(() => { setPage(1); }, [catFilter, supplierFilter, lowStockOnly]);
 
   const { data: productData, isLoading, isFetching } = useProducts({
     search: debouncedSearch,
@@ -481,6 +491,7 @@ export default function InventoryPage() {
     supplier: supplierFilter,
     page,
     limit,
+    ...(lowStockOnly ? { lowStock: 'true' } : {}),
   });
 
   const products = productData?.products || [];
@@ -505,13 +516,53 @@ export default function InventoryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-        <h1 className="text-2xl font-bold text-slate-800">Inventory</h1>
-        <p className="text-slate-500 text-sm">{total} products total</p>
+          <h1 className="text-2xl font-bold text-slate-800">Inventory</h1>
+          <p className="text-slate-500 text-sm">{total} products total</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Low Stock Filter Button */}
+          <button
+            id="low-stock-filter-btn"
+            onClick={() => setLowStockOnly(v => !v)}
+            className={`relative flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm border transition-all ${
+              lowStockOnly
+                ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-200'
+                : 'bg-white border-slate-200 text-slate-700 hover:border-red-400 hover:text-red-600'
+            }`}
+          >
+            <MdWarning size={16} />
+            Low Stock
+            {lowStockCount !== null && lowStockCount > 0 && (
+              <span
+                className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black ${
+                  lowStockOnly ? 'bg-white text-red-600' : 'bg-red-600 text-white'
+                }`}
+              >
+                {lowStockCount}
+              </span>
+            )}
+          </button>
+          <button id="add-product-btn" onClick={() => setModal('add')} className="btn-primary">
+            <MdAdd size={18} /> Add Product
+          </button>
+        </div>
       </div>
-        <button id="add-product-btn" onClick={() => setModal('add')} className="btn-primary">
-          <MdAdd size={18} /> Add Product
-        </button>
-      </div>
+
+      {/* Low Stock Banner */}
+      {lowStockOnly && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl">
+          <MdWarning size={20} className="text-red-500 shrink-0" />
+          <p className="text-sm font-semibold text-red-700">
+            Showing only low-stock items — {lowStockCount !== null ? `${lowStockCount} item${lowStockCount !== 1 ? 's' : ''} need restocking` : 'loading…'}
+          </p>
+          <button
+            onClick={() => setLowStockOnly(false)}
+            className="ml-auto text-xs font-black text-red-500 hover:text-red-700 underline underline-offset-2 transition-colors"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
 

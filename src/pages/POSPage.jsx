@@ -565,12 +565,22 @@ export default function POSPage() {
   const totalPages = Math.ceil((productData?.total || 0) / 20) || 1;
 
   const addToCart = (product) => {
-    if (product.quantity === 0) return toast.error('Out of stock');
+    if (product.quantity === 0) {
+      return toast.error(`"${product.name}" is out of stock`);
+    }
+
+    // Check current cart quantity before calling setCart
+    const existingItem = cart.find((i) => i.productId === product._id);
+    if (existingItem && existingItem.quantity >= product.quantity) {
+      return toast.error(`Only ${product.quantity} unit${product.quantity !== 1 ? 's' : ''} of "${product.name}" available in stock`);
+    }
+
     setCart((prev) => {
       const existing = prev.find((i) => i.productId === product._id);
       if (existing) {
-        if (existing.quantity >= product.quantity) return toast.error('Insufficient stock') || prev;
-        return prev.map((i) => i.productId === product._id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map((i) =>
+          i.productId === product._id ? { ...i, quantity: i.quantity + 1 } : i
+        );
       }
       return [...prev, {
         productId: product._id,
