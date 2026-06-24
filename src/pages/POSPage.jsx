@@ -83,7 +83,9 @@ function InvoiceModal({ sale: initialSale, onClose }) {
             unitPrice: Number(i.unitPrice),
             purchasePrice: Number(i.purchasePrice) || 0,
             discount: Number(i.discount),
-            discountType: i.discountType
+            discountType: i.discountType,
+            selectedUnit: i.selectedUnit || '',
+            conversionFactor: Number(i.conversionFactor) || 1
           };
         }),
         customer: sale.customer,
@@ -571,8 +573,12 @@ export default function POSPage() {
 
     // Check current cart quantity before calling setCart
     const existingItem = cart.find((i) => i.productId === product._id);
-    if (existingItem && existingItem.quantity >= product.quantity) {
-      return toast.error(`Only ${product.quantity} unit${product.quantity !== 1 ? 's' : ''} of "${product.name}" available in stock`);
+    if (existingItem) {
+      const currentQtyInBase = (existingItem.quantity || 0) / (existingItem.conversionFactor || 1);
+      const nextQtyInBase = currentQtyInBase + 1;
+      if (nextQtyInBase > product.quantity) {
+        return toast.error(`Only ${product.quantity} base unit${product.quantity !== 1 ? 's' : ''} of "${product.name}" available in stock`);
+      }
     }
 
     setCart((prev) => {
@@ -635,7 +641,7 @@ export default function POSPage() {
         }
       }
 
-      const newMaxQty = Math.floor(i.baseQty * newFactor);
+      const newMaxQty = newFactor > 0 ? Math.floor(i.baseQty * newFactor) : 0;
       let newQty = i.quantity;
       if (newQty > newMaxQty) newQty = newMaxQty;
 
