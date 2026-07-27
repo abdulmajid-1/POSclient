@@ -5,6 +5,16 @@ import jsPDF from 'jspdf';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
+const paymentMethodLabel = (method) => {
+  const labels = {
+    cash: 'Cash / نقداً',
+    card: 'Credit Card / بطاقة ائتمان',
+    bank_transfer: 'Bank Transfer / تحويل بنكي',
+    other: 'Other / أخرى',
+  };
+  return labels[method] || method || 'Cash / نقداً';
+};
+
 /**
  * PUBLIC Receipt Page — accessible without login.
  * Renders the EXACT same invoice structure, layout, and bilingual formatting as SalesPage.jsx.
@@ -265,7 +275,7 @@ export default function ReceiptPage() {
           </div>
 
           {/* ================= META ================= */}
-          <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
+          <div className="grid grid-cols-3 gap-4 mb-4 text-xs">
             <div className="border p-3 rounded">
               <p className="text-slate-500">Invoice No / رقم</p>
               <p className="font-semibold">{receipt.invoiceNumber}</p>
@@ -278,6 +288,10 @@ export default function ReceiptPage() {
               <p className="text-slate-500">Currency / العملة</p>
               <p className="font-semibold">SAR / ريال</p>
             </div>
+          </div>
+          <div className="mb-6 text-xs border p-3 rounded inline-block">
+            <span className="text-slate-500">Payment Method / طريقة الدفع: </span>
+            <span className="font-bold text-slate-800">{paymentMethodLabel(receipt.paymentMethod)}</span>
           </div>
 
           {/* ================= TABLE ================= */}

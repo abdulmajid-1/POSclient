@@ -427,8 +427,8 @@ export default function QuickBillPage() {
                   className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl font-black text-slate-800 focus:ring-2 focus:ring-primary-500 transition-all appearance-none cursor-pointer"
                 >
                   <option value="cash">💵 Cash</option>
-                  <option value="card">💳 Card</option>
-                  <option value="bank_transfer">🏦 Bank</option>
+                  <option value="card">💳 Credit Card</option>
+                  <option value="bank_transfer">🏦 Bank Transfer</option>
                 </select>
               </div>
             </div>

@@ -11,6 +11,16 @@ import { InvoiceQRFooter } from '../components/InvoiceQR';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
+const paymentMethodLabel = (method) => {
+  const labels = {
+    cash: 'Cash / نقداً',
+    card: 'Credit Card / بطاقة ائتمان',
+    bank_transfer: 'Bank Transfer / تحويل بنكي',
+    other: 'Other / أخرى',
+  };
+  return labels[method] || method || 'Cash / نقداً';
+};
+
 
 function InvoiceModal({ sale: initialSale, onClose }) {
   const invoiceRef = useRef();
@@ -268,7 +278,7 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                 {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
+            <div className="grid grid-cols-3 gap-4 mb-4 text-xs">
               <div className="border p-3 rounded">
                 <p className="text-slate-500">Invoice No / رقم الفاتورة</p>
                 <p className="text-lg font-semibold">{sale.invoiceNumber}</p>
@@ -281,6 +291,10 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                 <p className="text-slate-500">Currency / العملة</p>
                 <p className="font-semibold">SAR / ريال</p>
               </div>
+            </div>
+            <div className="mb-6 text-xs border p-3 rounded inline-block">
+              <span className="text-slate-500">Payment Method / طريقة الدفع: </span>
+              <span className="font-bold text-slate-800">{paymentMethodLabel(paymentMethod)}</span>
             </div>
 
             {/* TABLE */}
@@ -1016,8 +1030,8 @@ export default function POSPage() {
                 className="input text-sm py-2 font-medium"
               >
                 <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="bank_transfer">Bank</option>
+                <option value="card">Credit Card</option>
+                <option value="bank_transfer">Bank Transfer</option>
                 <option value="other">Other</option>
               </select>
             </div>

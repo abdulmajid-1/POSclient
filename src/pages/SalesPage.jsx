@@ -10,6 +10,16 @@ import { InvoiceQRFooter } from '../components/InvoiceQR';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
+const paymentMethodLabel = (method) => {
+  const labels = {
+    cash: 'Cash / نقداً',
+    card: 'Credit Card / بطاقة ائتمان',
+    bank_transfer: 'Bank Transfer / تحويل بنكي',
+    other: 'Other / أخرى',
+  };
+  return labels[method] || method || 'Cash / نقداً';
+};
+
 function SaleDetailModal({ saleId, onClose }) {
   const [sale, setSale] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -61,29 +71,6 @@ function SaleDetailModal({ saleId, onClose }) {
           <div ref={invoiceRef} className="print-container p-8 text-sm text-slate-800 bg-white">
 
             {/* ================= TITLE ================= */}
-            <div className="grid grid-cols-3 items-center mb-6 w-full">
-              <div className="text-left">
-                <h1 className="text-lg font-bold">Ewan Al-Hazm Trading Establishment</h1>
-                <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                  Hand Tools - Equipment - Safety - Workshop Supplies
-                </p>
-                <p className="text-xs text-slate-500">Address: As Saadah, OAJA4419, Al-Kharj 16443, Saudi Arabia</p>
-                <p className="text-xs text-slate-500">Mobile: 059 571 7520</p>
-              </div>
-
-              <div className="text-center">
-                <h1 className="text-2xl font-bold">TAX INVOICE</h1>
-                <p className="text-slate-500 text-sm">فاتورة ضريبية</p>
-                <p className="text-xs text-slate-500">VAT No: 313147090700003</p>
-              </div>
-
-              <div className="text-right">
-                <h1 className="text-lg font-bold">مؤسسة ايوان الحزم التجارية</h1>
-                <p className="text-[10px] font-semibold text-slate-600 mb-1">عدد يدوية - معدات - سلامة - لوازم ورش</p>
-                <p className="text-xs text-slate-500">العنوان: السعادة، الخرج، السعودية</p>
-                <p className="text-xs text-slate-500">الجوال:٠٥٩٥٧١٧٥٢٠</p>
-              </div>
-            </div> */}
 
             <div className="grid grid-cols-3 items-center mb-4 px-2">
 
@@ -160,7 +147,7 @@ function SaleDetailModal({ saleId, onClose }) {
             </div>
 
             {/* ================= META ================= */}
-            <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
+            <div className="grid grid-cols-3 gap-4 mb-4 text-xs">
               <div className="border p-3 rounded">
                 <p className="text-slate-500">Invoice No / رقم</p>
                 <p className="font-semibold">{sale.invoiceNumber}</p>
@@ -173,6 +160,10 @@ function SaleDetailModal({ saleId, onClose }) {
                 <p className="text-slate-500">Currency / العملة</p>
                 <p className="font-semibold">SAR / ريال</p>
               </div>
+            </div>
+            <div className="mb-6 text-xs border p-3 rounded inline-block">
+              <span className="text-slate-500">Payment Method / طريقة الدفع: </span>
+              <span className="font-bold text-slate-800">{paymentMethodLabel(sale.paymentMethod)}</span>
             </div>
 
             {/* ================= TABLE ================= */}
