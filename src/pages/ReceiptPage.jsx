@@ -271,11 +271,12 @@ export default function ReceiptPage() {
               <p className="font-semibold">Customer / العميل: {receipt.customer?.name || 'Walk-in Customer'}</p>
               {receipt.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {receipt.customer.phone}</p>}
               {receipt.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {receipt.customer.vatNumber}</p>}
+              <p className="text-slate-500">Payment / طريقة الدفع: <span className="font-bold text-slate-800">{paymentMethodLabel(receipt.paymentMethod)}</span></p>
             </div>
           </div>
 
           {/* ================= META ================= */}
-          <div className="grid grid-cols-3 gap-4 mb-4 text-xs">
+          <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
             <div className="border p-3 rounded">
               <p className="text-slate-500">Invoice No / رقم</p>
               <p className="font-semibold">{receipt.invoiceNumber}</p>
@@ -288,10 +289,6 @@ export default function ReceiptPage() {
               <p className="text-slate-500">Currency / العملة</p>
               <p className="font-semibold">SAR / ريال</p>
             </div>
-          </div>
-          <div className="mb-6 text-xs border p-3 rounded inline-block">
-            <span className="text-slate-500">Payment Method / طريقة الدفع: </span>
-            <span className="font-bold text-slate-800">{paymentMethodLabel(receipt.paymentMethod)}</span>
           </div>
 
           {/* ================= TABLE ================= */}

@@ -143,11 +143,12 @@ function SaleDetailModal({ saleId, onClose }) {
                 <p className="font-semibold">Customer / العميل: {sale.customer?.name || 'Walk-in Customer'}</p>
                 {sale.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {sale.customer.phone}</p>}
                 {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
+                <p className="text-slate-500">Payment / طريقة الدفع: <span className="font-bold text-slate-800">{paymentMethodLabel(sale.paymentMethod)}</span></p>
               </div>
             </div>
 
             {/* ================= META ================= */}
-            <div className="grid grid-cols-3 gap-4 mb-4 text-xs">
+            <div className="grid grid-cols-3 gap-4 mb-6 text-xs">
               <div className="border p-3 rounded">
                 <p className="text-slate-500">Invoice No / رقم</p>
                 <p className="font-semibold">{sale.invoiceNumber}</p>
@@ -160,10 +161,6 @@ function SaleDetailModal({ saleId, onClose }) {
                 <p className="text-slate-500">Currency / العملة</p>
                 <p className="font-semibold">SAR / ريال</p>
               </div>
-            </div>
-            <div className="mb-6 text-xs border p-3 rounded inline-block">
-              <span className="text-slate-500">Payment Method / طريقة الدفع: </span>
-              <span className="font-bold text-slate-800">{paymentMethodLabel(sale.paymentMethod)}</span>
             </div>
 
             {/* ================= TABLE ================= */}
