@@ -4,6 +4,10 @@ import { getWeeklySummary, getMonthlySummary } from '../services/saleService';
 
 /**
  * Calculates start/end dates for a given range type.
+ * - daily:   starts at midnight (00:00) today
+ * - weekly:  starts from the most recent Saturday at 00:00
+ * - monthly: starts from the 1st of the current month at 00:00
+ * - yearly:  starts from Jan 1st of the current year at 00:00
  */
 function calculateDates(type) {
   const now = new Date();
@@ -14,18 +18,22 @@ function calculateDates(type) {
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   } else if (type === 'weekly') {
-    start.setDate(now.getDate() - 7);
+    // Week starts on Saturday (day 6). Find the most recent Saturday.
+    const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const daysSinceSaturday = (day + 1) % 7; // Sat=0, Sun=1, Mon=2, ...
+    start.setDate(now.getDate() - daysSinceSaturday);
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   } else if (type === 'monthly') {
-    start.setDate(now.getDate() - 30);
-    start.setHours(0, 0, 0, 0);
+    // Start from the 1st of the current month
+    start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   } else if (type === 'yearly') {
-    start.setDate(now.getDate() - 365);
+    start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   }
+
 
   return { startDate: start.toISOString(), endDate: end.toISOString() };
 }

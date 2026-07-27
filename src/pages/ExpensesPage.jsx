@@ -225,21 +225,21 @@ export default function ExpensesPage() {
 
     if (rangeType === 'weekly') {
       const first = new Date(today);
-      first.setDate(today.getDate() - 7);
+      const day = today.getDay();
+      const daysSinceSaturday = (day + 1) % 7;
+      first.setDate(today.getDate() - daysSinceSaturday);
       start = first.toISOString().split('T')[0];
       end = today.toISOString().split('T')[0];
     }
 
     if (rangeType === 'monthly') {
-      const first = new Date(today);
-      first.setMonth(today.getMonth() - 1);
+      const first = new Date(today.getFullYear(), today.getMonth(), 1);
       start = first.toISOString().split('T')[0];
       end = today.toISOString().split('T')[0];
     }
 
     if (rangeType === 'yearly') {
-      const first = new Date(today);
-      first.setFullYear(today.getFullYear() - 1);
+      const first = new Date(today.getFullYear(), 0, 1);
       start = first.toISOString().split('T')[0];
       end = today.toISOString().split('T')[0];
     }

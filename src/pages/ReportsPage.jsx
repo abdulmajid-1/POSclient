@@ -25,13 +25,18 @@ function calculateDates(type, customStart, customEnd) {
   if (type === 'daily') {
     start.setHours(0, 0, 0, 0);          // today at midnight
   } else if (type === 'weekly') {
-    start.setDate(now.getDate() - 7);
+    // Week starts on Saturday (day 6). Find the most recent Saturday.
+    const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const daysSinceSaturday = (day + 1) % 7; // Sat=0, Sun=1, Mon=2, ...
+    start.setDate(now.getDate() - daysSinceSaturday);
     start.setHours(0, 0, 0, 0);
   } else if (type === 'monthly') {
-    start.setMonth(now.getMonth() - 1);
+    // Start from the 1st of the current month
+    start.setDate(1);
     start.setHours(0, 0, 0, 0);
   } else if (type === 'yearly') {
-    start.setFullYear(now.getFullYear() - 1);
+    // Start from Jan 1st of current year
+    start.setMonth(0, 1);
     start.setHours(0, 0, 0, 0);
   }
 

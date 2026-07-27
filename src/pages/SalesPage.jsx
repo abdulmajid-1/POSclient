@@ -373,16 +373,18 @@ function calculateDates(type, startDate, endDate) {
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   } else if (type === 'weekly') {
-    start.setDate(now.getDate() - 7);
+    // Week starts on Saturday (day 6). Find the most recent Saturday.
+    const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const daysSinceSaturday = (day + 1) % 7; // Sat=0, Sun=1, Mon=2, ...
+    start.setDate(now.getDate() - daysSinceSaturday);
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   } else if (type === 'monthly') {
-    start.setDate(now.getDate() - 30);
-    start.setHours(0, 0, 0, 0);
+    // Start from the 1st of the current month
+    start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   } else if (type === 'yearly') {
-    start.setDate(now.getDate() - 365);
-    start.setHours(0, 0, 0, 0);
+    start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   } else if (type === 'custom') {
     if (!startDate || !endDate) return null; // incomplete — caller must guard
