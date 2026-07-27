@@ -24,7 +24,7 @@ export default function ReceiptPage() {
 
   useEffect(() => {
     // SECURITY: Direct fetch — no auth interceptors, no tokens
-    const apiBase = import.meta.env.VITE_API_URL || 'https://posserver-4t0u.onrender.com/api';
+    const apiBase = import.meta.env.VITE_API_URL || 'https://posserver-production-4b29.up.railway.app/api';
     fetch(`${apiBase}/public/receipt/${id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
