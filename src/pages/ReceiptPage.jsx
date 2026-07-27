@@ -8,6 +8,7 @@ const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 /**
  * PUBLIC Receipt Page — accessible without login.
  * Renders the EXACT same invoice structure, layout, and bilingual formatting as SalesPage.jsx.
+ * Guarantees zero truncation on PDF download across all device screen sizes.
  */
 export default function ReceiptPage() {
   const { id } = useParams();
@@ -43,23 +44,63 @@ export default function ReceiptPage() {
   const handleDownloadPDF = async () => {
     if (!receiptRef.current) return;
     setDownloading(true);
+
     try {
+      // Capture canvas with html2canvas using onclone to force 800px full desktop layout
       const canvas = await html2canvas(receiptRef.current, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
+        windowWidth: 1200,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc) => {
+          const area = clonedDoc.getElementById('receipt-capture-area');
+          if (area) {
+            area.style.width = '800px';
+            area.style.maxWidth = 'none';
+            area.style.margin = '0 auto';
+            area.style.padding = '32px';
+            area.style.boxShadow = 'none';
+          }
+        },
       });
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+      const pageWidth = pdf.internal.pageSize.getWidth();   // 210 mm
+      const pageHeight = pdf.internal.pageSize.getHeight(); // 297 mm
+
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add extra pages if receipt height exceeds 1 A4 page height
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`Invoice-${receipt.invoiceNumber}.pdf`);
-    } catch {
+    } catch (err) {
+      console.error('PDF Generation error:', err);
       alert('Failed to generate PDF. Please try again.');
     } finally {
       setDownloading(false);
     }
+  };
+
+  const handleNativePrint = () => {
+    window.print();
   };
 
   // ──────────────────────────────────────────────────────────────────────
@@ -102,17 +143,31 @@ export default function ReceiptPage() {
   const totalDisc = itemDiscSum + (Number(receipt.discount) || 0);
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8 px-4 font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-900 py-8 px-2 sm:px-4 font-sans text-slate-800">
+      {/* CSS for Native Print */}
+      <style>{`
+        @media print {
+          body { background: #ffffff !important; color: #000000 !important; }
+          .no-print { display: none !important; }
+          #receipt-capture-area {
+            box-shadow: none !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+        }
+      `}</style>
+
       {/* Floating Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-md z-50 flex justify-center border-t border-slate-800">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-md z-50 flex justify-center gap-3 border-t border-slate-800 no-print">
         <button
           onClick={handleDownloadPDF}
           disabled={downloading}
-          className="w-full max-w-md py-4 px-8 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black text-base rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-3 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
+          className="flex-1 max-w-sm py-3.5 px-6 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
         >
           {downloading ? (
             <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Generating PDF...
             </>
           ) : (
@@ -120,17 +175,30 @@ export default function ReceiptPage() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              Download PDF Bill
+              Download PDF
             </>
           )}
         </button>
+
+        <button
+          onClick={handleNativePrint}
+          className="py-3.5 px-6 bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm rounded-2xl border border-slate-700 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Print
+        </button>
       </div>
 
-      {/* Main Container */}
-      <div className="max-w-4xl mx-auto pb-24">
+      {/* Main Outer Container */}
+      <div className="max-w-4xl mx-auto pb-24 overflow-x-auto">
         {/* Printable/Capturable Invoice Card — EXACT MATCH TO SalesPage.jsx */}
-        <div ref={receiptRef} className="bg-white p-8 rounded-2xl shadow-2xl text-sm text-slate-800">
-          
+        <div
+          ref={receiptRef}
+          id="receipt-capture-area"
+          className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl text-sm text-slate-800 min-w-[700px] sm:min-w-0"
+        >
           {/* ================= TITLE ================= */}
           <div className="grid grid-cols-3 items-center mb-4 px-2">
             {/* LEFT SIDE (English) */}
