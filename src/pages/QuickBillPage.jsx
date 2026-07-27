@@ -3,6 +3,7 @@ import { MdAdd, MdRemove, MdDelete, MdReceipt, MdPrint, MdClose, MdPerson, MdSet
 import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import CustomerSelector from '../components/CustomerSelector';
+import { InvoiceQRFooter } from '../components/InvoiceQR';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -145,11 +146,15 @@ function InvoiceModal({ sale, onClose }) {
             </div>
           </div>
 
-          {/* FOOTER */}
-          <div className="text-center text-[10px] text-slate-400 border-t pt-4">
-            <p>AB Traders - Powered POS System</p>
-            <p>Thank you for your business / شكراً لتعاملكم معنا</p>
-          </div>
+          {/* QR Code Footer — only works for saved sales */}
+          {sale._id ? (
+            <InvoiceQRFooter saleId={sale._id} />
+          ) : (
+            <div className="text-center text-[10px] text-slate-400 border-t pt-4 mt-4">
+              <p>AB Traders — Powered POS System</p>
+              <p>Thank you for your business / شكراً لتعاملكم معنا</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

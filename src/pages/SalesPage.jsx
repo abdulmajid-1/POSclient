@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import { useRef as usePrintRef } from 'react';
 import { TableSkeleton } from '../components/SkeletonLoader';
+import { InvoiceQRFooter } from '../components/InvoiceQR';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -350,6 +351,9 @@ function SaleDetailModal({ saleId, onClose }) {
                 })()}
               </div>
             </div>
+
+            {/* QR Code Footer */}
+            <InvoiceQRFooter saleId={sale._id} />
           </div>
         ) : null}
       </div>

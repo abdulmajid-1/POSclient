@@ -17,6 +17,7 @@ import SupplierPurchaseHistoryPage from './pages/SupplierPurchaseHistoryPage';
 import QuickBillPage from './pages/QuickBillPage';
 import CustomerPage from './pages/CustomerPage';
 import CustomerHistoryPage from './pages/CustomerHistoryPage';
+import ReceiptPage from './pages/ReceiptPage';
 
 export default function App() {
   return (
@@ -24,8 +25,9 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public */}
+            {/* Public — no auth required */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/receipt/:id" element={<ReceiptPage />} />
 
             {/* Protected — all wrapped in DashboardLayout */}
             <Route element={<DashboardLayout />}>

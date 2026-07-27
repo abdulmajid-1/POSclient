@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import CustomerSelector from '../components/CustomerSelector';
 import { CardSkeleton, InlineSpinner } from '../components/SkeletonLoader';
+import { InvoiceQRFooter } from '../components/InvoiceQR';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -15,7 +16,11 @@ function InvoiceModal({ sale: initialSale, onClose }) {
   const invoiceRef = useRef();
   const [sale, setSale] = useState(initialSale);
   const [items, setItems] = useState(initialSale.items);
-  const [discount, setDiscount] = useState(initialSale.discount || 0);
+  const [discount, setDiscount] = useState(
+    initialSale.discountType === 'percentage'
+      ? (initialSale.subtotal > 0 ? (initialSale.discount / initialSale.subtotal) * 100 : 0)
+      : (initialSale.discount || 0)
+  );
   const [discountType, setDiscountType] = useState(initialSale.discountType || 'fixed');
   const [taxRate, setTaxRate] = useState(initialSale.taxRate || 15);
   const [paymentMethod, setPaymentMethod] = useState(initialSale.paymentMethod || 'cash');
@@ -107,7 +112,11 @@ function InvoiceModal({ sale: initialSale, onClose }) {
 
       setSale(data.sale);
       setItems(data.sale.items);
-      setDiscount(data.sale.discount);
+      setDiscount(
+        data.sale.discountType === 'percentage'
+          ? (data.sale.subtotal > 0 ? (data.sale.discount / data.sale.subtotal) * 100 : 0)
+          : (data.sale.discount || 0)
+      );
       setDiscountType(data.sale.discountType);
       setTaxRate(data.sale.taxRate);
       toast.success(sale._id ? 'Sale updated successfully!' : 'Sale finalized and saved!');
@@ -510,12 +519,16 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                 </div>
               </div>
             </div>
+            {/* QR Code Footer — only shows when sale is saved to DB */}
+            <InvoiceQRFooter saleId={sale._id} />
 
-
-
-            <div className="text-center text-[10px] text-slate-400 mt-10 opacity-50 no-print">
-              <p>AB Traders POS System </p>
-            </div>
+            {/* Fallback footer when not saved */}
+            {!sale._id && (
+              <div className="text-center text-[10px] text-slate-400 mt-10 opacity-50">
+                <p>AB Traders POS System</p>
+                <p className="text-slate-300">Save the invoice to generate QR code</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
