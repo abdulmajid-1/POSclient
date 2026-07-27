@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
+const round4 = (num) => Math.round((Number(num) || 0) * 10000) / 10000;
+const formatSAR = (n) => `SAR ${round4(n).toLocaleString('en-SA')}`;
 
 /**
  * PUBLIC Receipt Page — accessible without login.

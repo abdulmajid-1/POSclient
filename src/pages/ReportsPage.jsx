@@ -8,7 +8,8 @@ import { MdAssessment, MdPrint, MdTrendingUp, MdTrendingDown } from 'react-icons
 import toast from 'react-hot-toast';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
-const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
+const round4 = (num) => Math.round((Number(num) || 0) * 10000) / 10000;
+const formatSAR = (n) => `SAR ${round4(n).toLocaleString('en-SA')}`;
 
 /* ── Returns { start: ISO string, end: ISO string } ── */
 function calculateDates(type, customStart, customEnd) {

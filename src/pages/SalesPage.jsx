@@ -8,7 +8,8 @@ import { useRef as usePrintRef } from 'react';
 import { TableSkeleton } from '../components/SkeletonLoader';
 import { InvoiceQRFooter } from '../components/InvoiceQR';
 
-const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
+const round4 = (num) => Math.round((Number(num) || 0) * 10000) / 10000;
+const formatSAR = (n) => `SAR ${round4(n).toLocaleString('en-SA')}`;
 
 function SaleDetailModal({ saleId, onClose }) {
   const [sale, setSale] = useState(null);
