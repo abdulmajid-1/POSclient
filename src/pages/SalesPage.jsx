@@ -58,10 +58,10 @@ function SaleDetailModal({ saleId, onClose }) {
             <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : sale ? (
-          <div ref={invoiceRef} className="p-8 text-sm text-slate-800">
+          <div ref={invoiceRef} className="print-container p-8 text-sm text-slate-800 bg-white">
 
             {/* ================= TITLE ================= */}
-            {/* <div className="grid grid-cols-3 items-center mb-6">
+            <div className="grid grid-cols-3 items-center mb-6 w-full">
               <div className="text-left">
                 <h1 className="text-lg font-bold">Ewan Al-Hazm Trading Establishment</h1>
                 <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">

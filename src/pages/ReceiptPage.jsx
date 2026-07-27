@@ -197,10 +197,10 @@ export default function ReceiptPage() {
         <div
           ref={receiptRef}
           id="receipt-capture-area"
-          className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl text-sm text-slate-800 min-w-[700px] sm:min-w-0"
+          className="print-container bg-white p-6 sm:p-8 rounded-2xl shadow-2xl text-sm text-slate-800 min-w-[700px] sm:min-w-0"
         >
           {/* ================= TITLE ================= */}
-          <div className="grid grid-cols-3 items-center mb-4 px-2">
+          <div className="grid grid-cols-3 items-center mb-6 w-full px-2">
             {/* LEFT SIDE (English) */}
             <div className="text-left">
               <h1 className="text-base font-bold leading-tight">
