@@ -5,8 +5,7 @@ import { useReactToPrint } from 'react-to-print';
 import CustomerSelector from '../components/CustomerSelector';
 import { InvoiceQRFooter } from '../components/InvoiceQR';
 
-const round4 = (num) => Math.round((Number(num) || 0) * 10000) / 10000;
-const formatSAR = (n) => `SAR ${round4(n).toLocaleString('en-SA')}`;
+const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
 function InvoiceModal({ sale, onClose }) {
   const invoiceRef = useRef();

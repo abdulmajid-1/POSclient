@@ -8,19 +8,18 @@ import { MdAssessment, MdPrint, MdTrendingUp, MdTrendingDown } from 'react-icons
 import toast from 'react-hot-toast';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
-const round4 = (num) => Math.round((Number(num) || 0) * 10000) / 10000;
-const formatSAR = (n) => `SAR ${round4(n).toLocaleString('en-SA')}`;
+const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
 /* ── Returns { start: ISO string, end: ISO string } ── */
 function calculateDates(type, customStart, customEnd) {
   if (type === 'custom') {
     return {
       start: customStart ? new Date(customStart + 'T00:00:00').toISOString() : '',
-      end:   customEnd   ? new Date(customEnd   + 'T23:59:59').toISOString() : '',
+      end: customEnd ? new Date(customEnd + 'T23:59:59').toISOString() : '',
     };
   }
 
-  const now   = new Date();
+  const now = new Date();
   const start = new Date();
 
   if (type === 'daily') {
@@ -56,12 +55,12 @@ function StatCard({ label, value, color = 'text-slate-800', sub }) {
 }
 
 export default function ReportsPage() {
-  const [tab, setTab]             = useState('sales');
+  const [tab, setTab] = useState('sales');
   const [rangeType, setRangeType] = useState('monthly');
   const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate]     = useState('');
-  const [data, setData]           = useState(null);
-  const [loading, setLoading]     = useState(false);
+  const [endDate, setEndDate] = useState('');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [inventoryPage, setInventoryPage] = useState(1);
   const inventoryLimit = 20;
 
@@ -72,10 +71,10 @@ export default function ReportsPage() {
       const { start, end } = calculateDates(rangeType, startDate, endDate);
       const params = { startDate: start, endDate: end };
       let res;
-      if      (tab === 'sales')     res = await getSalesReport(params);
-      else if (tab === 'expenses')  res = await getExpenseReport(params);
-      else if (tab === 'profit')    res = await getProfitReport(params);
-      else                          res = await getInventoryReport();
+      if (tab === 'sales') res = await getSalesReport(params);
+      else if (tab === 'expenses') res = await getExpenseReport(params);
+      else if (tab === 'profit') res = await getProfitReport(params);
+      else res = await getInventoryReport();
       setData(res.data);
     } catch {
       toast.error('Failed to load report');
@@ -93,18 +92,18 @@ export default function ReportsPage() {
   }, [tab, rangeType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tabs = [
-    { key: 'sales',     label: '📊 Sales Report'    },
-    { key: 'expenses',  label: '💸 Expense Report'  },
-    { key: 'profit',    label: '💰 Profit Report'   },
+    { key: 'sales', label: '📊 Sales Report' },
+    { key: 'expenses', label: '💸 Expense Report' },
+    { key: 'profit', label: '💰 Profit Report' },
     { key: 'inventory', label: '📦 Inventory Report' },
   ];
 
   const ranges = [
-    { key: 'daily',   label: 'Daily'   },
-    { key: 'weekly',  label: 'Weekly'  },
+    { key: 'daily', label: 'Daily' },
+    { key: 'weekly', label: 'Weekly' },
     { key: 'monthly', label: 'Monthly' },
-    { key: 'yearly',  label: 'Yearly'  },
-    { key: 'custom',  label: 'Custom'  },
+    { key: 'yearly', label: 'Yearly' },
+    { key: 'custom', label: 'Custom' },
   ];
 
   const rangeLabel = ranges.find((r) => r.key === rangeType)?.label || '';
@@ -132,11 +131,10 @@ export default function ReportsPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-              tab === t.key
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${tab === t.key
                 ? 'bg-slate-900 text-white shadow-lg'
                 : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
-            }`}
+              }`}
           >
             {t.label}
           </button>
@@ -151,11 +149,10 @@ export default function ReportsPage() {
               <button
                 key={r.key}
                 onClick={() => setRangeType(r.key)}
-                className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${
-                  rangeType === r.key
+                className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${rangeType === r.key
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
-                }`}
+                  }`}
               >
                 {r.label}
               </button>
@@ -189,11 +186,11 @@ export default function ReportsPage() {
           {tab === 'sales' && (
             <div className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                <StatCard label="Total Sales"        value={data.data?.count    || 0}                  />
-                <StatCard label="Revenue"            value={formatSAR(data.data?.revenue)}     color="text-emerald-600" />
-                <StatCard label="Gross Profit"       value={formatSAR(data.data?.totalProfit)} color="text-blue-600"    />
-                <StatCard label="Discount Given"     value={formatSAR(data.data?.discount)}    color="text-amber-600"   />
-                <StatCard label="Tax Collected"      value={formatSAR(data.data?.tax)}         color="text-purple-600"  />
+                <StatCard label="Total Sales" value={data.data?.count || 0} />
+                <StatCard label="Revenue" value={formatSAR(data.data?.revenue)} color="text-emerald-600" />
+                <StatCard label="Gross Profit" value={formatSAR(data.data?.totalProfit)} color="text-blue-600" />
+                <StatCard label="Discount Given" value={formatSAR(data.data?.discount)} color="text-amber-600" />
+                <StatCard label="Tax Collected" value={formatSAR(data.data?.tax)} color="text-purple-600" />
               </div>
 
               {/* ── Per-day Revenue & Profit Chart ── */}
@@ -209,7 +206,7 @@ export default function ReportsPage() {
                       <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
                       <Tooltip formatter={(v) => formatSAR(v)} />
                       <Bar dataKey="revenue" name="Revenue" fill="#2563eb" radius={[3, 3, 0, 0]} />
-                      <Bar dataKey="profit"  name="Profit"  fill="#10b981" radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="profit" name="Profit" fill="#10b981" radius={[3, 3, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -228,8 +225,8 @@ export default function ReportsPage() {
           {tab === 'expenses' && (
             <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <StatCard label="Total Expenses"  value={formatSAR(data.totals?.total)}   color="text-red-500"  />
-                <StatCard label="Categories"      value={data.byCategory?.length || 0}                          />
+                <StatCard label="Total Expenses" value={formatSAR(data.totals?.total)} color="text-red-500" />
+                <StatCard label="Categories" value={data.byCategory?.length || 0} />
               </div>
 
               {data.byCategory?.length > 0 ? (
@@ -283,10 +280,10 @@ export default function ReportsPage() {
           {tab === 'profit' && (
             <div className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                <StatCard label="Revenue"      value={formatSAR(data.data?.revenue)}     color="text-emerald-600" />
-                <StatCard label="Expenses"     value={formatSAR(data.data?.expenses)}    color="text-red-500"     />
-                <StatCard label="Returns"      value={formatSAR(data.data?.returns)}     color="text-amber-500"   />
-                <StatCard label="Gross Profit" value={formatSAR(data.data?.grossProfit)} color="text-blue-600"    />
+                <StatCard label="Revenue" value={formatSAR(data.data?.revenue)} color="text-emerald-600" />
+                <StatCard label="Expenses" value={formatSAR(data.data?.expenses)} color="text-red-500" />
+                <StatCard label="Returns" value={formatSAR(data.data?.returns)} color="text-amber-500" />
+                <StatCard label="Gross Profit" value={formatSAR(data.data?.grossProfit)} color="text-blue-600" />
                 <StatCard
                   label="Net Profit"
                   value={formatSAR(data.data?.netProfit)}
@@ -301,11 +298,11 @@ export default function ReportsPage() {
                 <ResponsiveContainer width="100%" height={260}>
                   <BarChart
                     data={[
-                      { name: 'Revenue',      value: data.data?.revenue     },
-                      { name: 'Expenses',     value: data.data?.expenses    },
-                      { name: 'Returns',      value: data.data?.returns     },
+                      { name: 'Revenue', value: data.data?.revenue },
+                      { name: 'Expenses', value: data.data?.expenses },
+                      { name: 'Returns', value: data.data?.returns },
                       { name: 'Gross Profit', value: data.data?.grossProfit },
-                      { name: 'Net Profit',   value: data.data?.netProfit   },
+                      { name: 'Net Profit', value: data.data?.netProfit },
                     ]}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -327,9 +324,9 @@ export default function ReportsPage() {
           {tab === 'inventory' && (
             <div className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <StatCard label="Total Products"      value={data.totals?.totalProducts || 0}              />
-                <StatCard label="Stock Value (Cost)"  value={formatSAR(data.totals?.totalStockValue)}      />
-                <StatCard label="Stock Value (Sale)"  value={formatSAR(data.totals?.totalSaleValue)}       />
+                <StatCard label="Total Products" value={data.totals?.totalProducts || 0} />
+                <StatCard label="Stock Value (Cost)" value={formatSAR(data.totals?.totalStockValue)} />
+                <StatCard label="Stock Value (Sale)" value={formatSAR(data.totals?.totalSaleValue)} />
               </div>
 
               <div className="card p-0">
