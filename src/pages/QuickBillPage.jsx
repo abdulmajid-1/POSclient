@@ -3,7 +3,7 @@ import { MdAdd, MdRemove, MdDelete, MdReceipt, MdPrint, MdClose, MdPerson, MdSet
 import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import CustomerSelector from '../components/CustomerSelector';
-import { InvoiceQRFooter } from '../components/InvoiceQR';
+import ZatcaReceiptQR from '../components/ZatcaReceiptQR';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -44,7 +44,7 @@ function InvoiceModal({ sale, onClose }) {
             <div className="text-center">
               <h1 className="text-2xl font-bold">TAX INVOICE</h1>
               <p className="text-slate-500 text-sm">فاتورة ضريبية</p>
-              <p className="text-xs text-slate-500">VAT No: 313147090700003</p>
+              <p className="text-xs text-slate-500">VAT No: 314852932200003</p>
             </div>
             <div className="text-right">
               <h1 className="text-lg font-bold">مؤسسة ايوان الحزم التجارية</h1>
@@ -62,7 +62,7 @@ function InvoiceModal({ sale, onClose }) {
               <p className="font-bold mb-2">From / من</p>
               <p className="font-semibold">Ewan Al-Hazm Trading Establishment</p>
               <p className="text-xs text-slate-400">مؤسسة ايوان الحزم التجارية</p>
-              <p className="text-xs text-slate-400">VAT / ضريبة: 313147090700003</p>
+              <p className="text-xs text-slate-400">VAT / ضريبة: 314852932200003</p>
             </div>
             <div className="p-4 border rounded-lg">
               <p className="font-bold mb-2">To / إلى</p>
@@ -146,15 +146,8 @@ function InvoiceModal({ sale, onClose }) {
             </div>
           </div>
 
-          {/* QR Code Footer — only works for saved sales */}
-          {sale._id ? (
-            <InvoiceQRFooter saleId={sale._id} />
-          ) : (
-            <div className="text-center text-[10px] text-slate-400 border-t pt-4 mt-4">
-              <p>AB Traders — Powered POS System</p>
-              <p>Thank you for your business / شكراً لتعاملكم معنا</p>
-            </div>
-          )}
+          {/* ZATCA Phase 2 E-Invoice QR Code */}
+          <ZatcaReceiptQR qrCode={sale.zatca?.qrCode} />
         </div>
       </div>
     </div>

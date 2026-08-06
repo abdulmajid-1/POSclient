@@ -7,3 +7,4 @@ export const updateSale = (id, data) => api.put(`/sales/${id}`, data);
 export const getDailySummary = () => api.get('/sales/summary/daily');
 export const getWeeklySummary = () => api.get('/sales/summary/weekly');
 export const getMonthlySummary = () => api.get('/sales/summary/monthly');
+export const reportSaleToZatca = (id, otp = '12345') => api.post(`/sales/${id}/report-zatca`, { otp });

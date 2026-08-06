@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import CustomerSelector from '../components/CustomerSelector';
 import { CardSkeleton, InlineSpinner } from '../components/SkeletonLoader';
-import { InvoiceQRFooter } from '../components/InvoiceQR';
+import ZatcaReportButton from '../components/ZatcaReportButton';
+import ZatcaReceiptQR from '../components/ZatcaReceiptQR';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -150,7 +151,14 @@ function InvoiceModal({ sale: initialSale, onClose }) {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {sale._id && (
+              <ZatcaReportButton
+                sale={sale}
+                onSaleUpdated={(updated) => setSale(updated)}
+                onTriggerPrint={handlePrint}
+              />
+            )}
             <button onClick={handleAddItem} className="flex items-center gap-2 py-2 px-4 bg-primary-50 text-primary-600 rounded-xl text-xs font-black hover:bg-primary-100 transition-all border border-primary-100">
               <MdAdd size={18} /> Add New Row
             </button>
@@ -182,7 +190,7 @@ function InvoiceModal({ sale: initialSale, onClose }) {
               <div className="text-center space-y-2">
                 <h1 className="text-[30px] font-bold">TAX INVOICE</h1>
                 <p className="text-slate-500 text-[20px]">فاتورة ضريبية</p>
-                <p className="text-md text-slate-500">VAT No: 313147090700003</p>
+                <p className="text-md text-slate-500">VAT No: 314852932200003</p>
               </div>
               <div className="text-right space-y-2">
                 <h1 className="text-[30px] font-bold leading-[1.2]">
@@ -237,7 +245,7 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                   </p>
 
                   <p className="text-md text-slate-500">
-                    VAT No: 313147090700003
+                    VAT No: 314852932200003
                   </p>
                 </div>
 
@@ -269,7 +277,7 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                 <p className="font-bold">From / من</p>
                 <p className="font-semibold">Ewan Al-Hazm Trading Establishment</p>
                 <p className="text-md text-slate-400">مؤسسة ايوان الحزم التجارية</p>
-                <p className="text-md text-slate-400">VAT / ضريبة: 313147090700003</p>
+                <p className="text-md text-slate-400">VAT / ضريبة: 314852932200003</p>
               </div>
               <div className="p-4 border rounded-lg space-y-2">
                 <p className="font-bold mb-2">To / إلى</p>
@@ -530,8 +538,8 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                 </div>
               </div>
             </div>
-            {/* QR Code Footer — only shows when sale is saved to DB */}
-            <InvoiceQRFooter saleId={sale._id} />
+            {/* ZATCA Phase 2 E-Invoice QR Code */}
+            <ZatcaReceiptQR qrCode={sale.zatca?.qrCode} />
 
             {/* Fallback footer when not saved */}
             {!sale._id && (

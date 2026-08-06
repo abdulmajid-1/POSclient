@@ -36,8 +36,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onCollapseToggle
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full bg-slate-900 z-50 flex flex-col transition-all duration-300 lg:translate-x-0 lg:static lg:z-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      <aside className={`fixed top-0 left-0 h-full bg-slate-900 dark:bg-[#0B0F19] border-r border-slate-800 z-50 flex flex-col transition-all duration-300 lg:translate-x-0 lg:static lg:z-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'w-20' : 'w-64'}`}>
         
         {/* Logo & Toggle */}
         <div className={`flex items-center justify-between border-b border-slate-700/50 py-5 ${isCollapsed ? 'px-5' : 'px-6'}`}>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import ZatcaReceiptQR from '../components/ZatcaReceiptQR';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -236,7 +237,7 @@ export default function ReceiptPage() {
                 فاتورة ضريبية
               </p>
               <p className="text-[10px] text-slate-500">
-                VAT No: 313147090700003
+                VAT No: 314852932200003
               </p>
             </div>
 
@@ -263,7 +264,7 @@ export default function ReceiptPage() {
               <p className="font-bold mb-2">From / من</p>
               <p className="font-semibold">Ewan Al-Hazm Trading Establishment</p>
               <p className="text-xs text-slate-400">مؤسسة ايوان الحزم التجارية</p>
-              <p className="text-xs text-slate-400">VAT / ضريبة: 313147090700003</p>
+              <p className="text-xs text-slate-400">VAT / ضريبة: 314852932200003</p>
             </div>
 
             <div className="p-4 border rounded-lg">
@@ -364,6 +365,9 @@ export default function ReceiptPage() {
               )}
             </div>
           </div>
+
+          {/* ZATCA Phase 2 QR Code */}
+          <ZatcaReceiptQR qrCode={receipt.zatca?.qrCode} />
 
           {/* ================= FOOTER ================= */}
           <div className="text-center text-[10px] text-slate-400 border-t pt-4">
