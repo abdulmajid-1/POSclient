@@ -323,7 +323,7 @@ function ProductModal({ product, onClose, onSaved }) {
 
             {/* Supplier selection */}
             <div className="col-span-2">
-              <SearchableSelect label="Supplier" placeholder="Search & select supplier..." options={supOptions} value={form.supplier} onChange={(v) => setForm({ ...form, supplier: v })} />
+              <SearchableSelect label="Supplier (Optional)" placeholder="Search & select supplier..." options={supOptions} value={form.supplier} onChange={(v) => setForm({ ...form, supplier: v })} />
               <div className="mt-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">+ Create New Supplier</label>
                 <div className="flex gap-2">
@@ -336,25 +336,78 @@ function ProductModal({ product, onClose, onSaved }) {
             {/* Purchase Price */}
             <div className="col-span-1">
               <label className="label font-bold text-slate-700">Purchase Cost (SAR) <span className="text-red-500">*</span></label>
-              <input type="number" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} className="input font-black text-primary-600" min={0} step="any" required />
+              <input
+                type="number"
+                value={form.purchasePrice}
+                onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}
+                onWheel={(e) => e.target.blur()}
+                className="input font-black text-primary-600"
+                min={0}
+                step="any"
+                required
+              />
             </div>
 
             {/* Sale Price */}
             <div className="col-span-1">
               <label className="label font-bold text-slate-700">Selling Price (SAR) <span className="text-red-500">*</span></label>
-              <input type="number" value={form.salePrice} onChange={(e) => setForm({ ...form, salePrice: e.target.value })} className="input font-black text-emerald-600" min={0} step="any" required />
+              <input
+                type="number"
+                value={form.salePrice}
+                onChange={(e) => setForm({ ...form, salePrice: e.target.value })}
+                onWheel={(e) => e.target.blur()}
+                className="input font-black text-emerald-600"
+                min={0}
+                step="any"
+                required
+              />
             </div>
 
             {/* Quantity */}
             <div className="col-span-1">
               <label className="label font-bold text-slate-700">Stock Quantity <span className="text-red-500">*</span></label>
-              <input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className="input font-bold" min={0} step="any" required placeholder="0" />
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, quantity: Math.max(0, (Number(f.quantity) || 0) - 1) }))}
+                  className="w-9 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg font-black text-lg transition-colors shrink-0"
+                  title="Decrease by 1"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                  onWheel={(e) => e.target.blur()}
+                  className="input font-black text-center text-slate-900 dark:text-slate-100"
+                  min={0}
+                  step="any"
+                  required
+                  placeholder="0"
+                />
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, quantity: (Number(f.quantity) || 0) + 1 }))}
+                  className="w-9 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg font-black text-lg transition-colors shrink-0"
+                  title="Increase by 1"
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             {/* Low Stock Threshold */}
             <div className="col-span-1">
               <label className="label font-bold text-slate-700">Alert Threshold</label>
-              <input type="number" value={form.lowStockThreshold} onChange={(e) => setForm({ ...form, lowStockThreshold: e.target.value })} className="input" min={0} />
+              <input
+                type="number"
+                value={form.lowStockThreshold}
+                onChange={(e) => setForm({ ...form, lowStockThreshold: e.target.value })}
+                onWheel={(e) => e.target.blur()}
+                className="input"
+                min={0}
+              />
             </div>
 
             {/* Description — full width */}
