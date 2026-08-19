@@ -55,9 +55,9 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onCollapseToggle
           {/* Desktop Collapse Toggle */}
           <button 
             onClick={onCollapseToggle}
-            className="hidden lg:flex w-6 h-6 items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+            className="hidden lg:flex w-9 h-9 items-center justify-center rounded-xl bg-slate-700 text-slate-200 hover:text-white hover:bg-primary-600 transition-all duration-200 shadow-md shrink-0"
           >
-            {isCollapsed ? <MdChevronRight size={18} /> : <MdChevronLeft size={18} />}
+            {isCollapsed ? <MdChevronRight size={22} /> : <MdChevronLeft size={22} />}
           </button>
         </div>
 

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
@@ -9,6 +9,18 @@ export default function DashboardLayout() {
   const { isAuthenticated, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [userCollapsed, setUserCollapsed] = useState(false);
+  const location = useLocation();
+  const isPosPage = location.pathname === '/pos';
+
+  // Auto-collapse sidebar on POS page; restore user preference when leaving
+  useEffect(() => {
+    if (isPosPage) {
+      setCollapsed(true);
+    } else {
+      setCollapsed(userCollapsed);
+    }
+  }, [isPosPage]);
 
   if (loading) {
     return (
@@ -30,7 +42,11 @@ export default function DashboardLayout() {
         isOpen={sidebarOpen} 
         onClose={() => setSidebarOpen(false)} 
         isCollapsed={collapsed}
-        onCollapseToggle={() => setCollapsed(!collapsed)}
+        onCollapseToggle={() => {
+          const next = !collapsed;
+          setCollapsed(next);
+          if (!isPosPage) setUserCollapsed(next);
+        }}
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Navbar 
