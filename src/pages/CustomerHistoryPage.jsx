@@ -14,6 +14,7 @@ import {
     MdKeyboardReturn
 } from 'react-icons/md';
 import toast from 'react-hot-toast';
+import { formatBillDate } from '../utils/dateUtils';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -150,7 +151,7 @@ export default function CustomerHistoryPage() {
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-4 text-xs text-slate-400">
-                                                <span className="flex items-center gap-1 font-bold"><MdCalendarToday size={14} /> {new Date(sale.createdAt).toLocaleDateString()}</span>
+                                                <span className="flex items-center gap-1 font-bold"><MdCalendarToday size={14} /> {formatBillDate(sale.createdAt, true)}</span>
                                                 <span className="flex items-center gap-1 font-bold"><MdAttachMoney size={14} /> {sale.paymentMethod}</span>
                                             </div>
                                         </div>
@@ -197,7 +198,7 @@ export default function CustomerHistoryPage() {
                                                 <span className="text-[10px] text-slate-400 font-bold border-l pl-2 border-slate-200 ml-1">Ref: {ret.invoiceNumber}</span>
                                             </div>
                                             <div className="flex items-center gap-4 text-xs text-slate-400">
-                                                <span className="flex items-center gap-1 font-bold"><MdCalendarToday size={14} /> {new Date(ret.createdAt).toLocaleDateString()}</span>
+                                                <span className="flex items-center gap-1 font-bold"><MdCalendarToday size={14} /> {formatBillDate(ret.createdAt, true)}</span>
                                                 <span className="text-red-500 font-bold italic">Reason: {ret.reason}</span>
                                             </div>
                                         </div>

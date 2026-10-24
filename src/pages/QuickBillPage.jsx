@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import CustomerSelector from '../components/CustomerSelector';
 import ZatcaReceiptQR from '../components/ZatcaReceiptQR';
+import { formatBillDate, combineDateWithCurrentTime } from '../utils/dateUtils';
+import { useAuth } from '../context/AuthContext';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -80,7 +82,7 @@ function InvoiceModal({ sale, onClose }) {
             </div>
             <div className="border p-3 rounded">
               <p className="text-slate-500">Date / التاريخ</p>
-              <p className="font-semibold">{new Date(sale.createdAt).toLocaleDateString()}</p>
+              <p className="font-semibold">{formatBillDate(sale.createdAt || new Date(), true)}</p>
             </div>
             <div className="border p-3 rounded">
               <p className="text-slate-500">Currency / العملة</p>
@@ -155,8 +157,9 @@ function InvoiceModal({ sale, onClose }) {
 }
 
 export default function QuickBillPage() {
+  const { isDeveloper } = useAuth();
   const [cart, setCart] = useState([]);
-  const [customer, setCustomer] = useState({ name: 'Walk-in Customer', phone: '', vatNumber: '' });
+  const [customer, setCustomer] = useState({ name: 'Walk-in Customer', phone: '', vatNumber: '', address: '' });
   const [discount, setDiscount] = useState(0);
   const [discountType, setDiscountType] = useState('fixed');
   const [taxRate, setTaxRate] = useState(15);
@@ -217,7 +220,7 @@ export default function QuickBillPage() {
       taxRate,
       total,
       paymentMethod,
-      createdAt: billDate
+      createdAt: isDeveloper && billDate ? combineDateWithCurrentTime(billDate) : new Date().toISOString()
     };
 
     setInvoice(finalSale);
@@ -225,7 +228,7 @@ export default function QuickBillPage() {
   };
 
   const handleCustomerSelect = (c) => {
-    setCustomer({ _id: c._id, name: c.name, phone: c.phone || '', vatNumber: c.vatNumber || '' });
+    setCustomer({ _id: c._id, name: c.name, phone: c.phone || '', vatNumber: c.vatNumber || '', address: c.address || '' });
     setShowCustomerSelector(false);
   };
 
@@ -357,7 +360,7 @@ export default function QuickBillPage() {
               <h3 className="font-black text-slate-800 uppercase tracking-wider text-sm">Customer Information</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Client Name</label>
                 <div className="relative">
@@ -390,6 +393,15 @@ export default function QuickBillPage() {
                   placeholder="31xx..."
                 />
               </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Address (Optional)</label>
+                <input
+                  value={customer.address || ''}
+                  onChange={e => setCustomer({ ...customer, address: e.target.value })}
+                  className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl font-bold text-slate-800 focus:ring-2 focus:ring-primary-500 transition-all"
+                  placeholder="Street / City"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
@@ -403,15 +415,17 @@ export default function QuickBillPage() {
                   className="w-full px-4 py-3 bg-slate-900 border-none rounded-2xl font-black text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-all tracking-widest"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Bill Date</label>
-                <input
-                  type="date"
-                  value={billDate}
-                  onChange={e => setBillDate(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl font-bold text-slate-800 focus:ring-2 focus:ring-primary-500 transition-all"
-                />
-              </div>
+              {isDeveloper && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Bill Date</label>
+                  <input
+                    type="date"
+                    value={billDate}
+                    onChange={e => setBillDate(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl font-bold text-slate-800 focus:ring-2 focus:ring-primary-500 transition-all"
+                  />
+                </div>
+              )}
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Payment Method</label>
                 <select

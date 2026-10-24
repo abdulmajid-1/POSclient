@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import ZatcaReceiptQR from '../components/ZatcaReceiptQR';
+import { formatBillDate } from '../utils/dateUtils';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -258,21 +259,32 @@ export default function ReceiptPage() {
             </div>
           </div>
 
-          {/* ================= FROM / TO ================= */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="p-4 border rounded-lg">
-              <p className="font-bold mb-2">From / من</p>
-              <p className="font-semibold">Ewan Al-Hazm Trading Establishment</p>
-              <p className="text-xs text-slate-400">مؤسسة ايوان الحزم التجارية</p>
-              <p className="text-xs text-slate-400">VAT / ضريبة: 314852932200003</p>
+          {/* ================= FROM / TO (STRETCHED VERTICALLY) ================= */}
+          <div className="grid grid-cols-2 gap-4 mb-6 min-h-[125px]">
+            <div className="p-3.5 border rounded-lg flex flex-col justify-between text-xs h-full bg-slate-50/40">
+              <div>
+                <p className="font-bold text-slate-800 mb-1">From / من</p>
+                <p className="font-semibold text-slate-900">Ewan Al-Hazm Trading Establishment</p>
+                <p className="text-slate-500">مؤسسة ايوان الحزم التجارية</p>
+                <p className="text-slate-500">VAT / ضريبة: 314852932200003</p>
+              </div>
             </div>
 
-            <div className="p-4 border rounded-lg">
-              <p className="font-bold mb-2">To / إلى</p>
-              <p className="font-semibold">Customer / العميل: {receipt.customer?.name || 'Walk-in Customer'}</p>
-              {receipt.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {receipt.customer.phone}</p>}
-              {receipt.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {receipt.customer.vatNumber}</p>}
-              <p className="text-slate-500">Payment / طريقة الدفع: <span className="font-bold text-slate-800">{paymentMethodLabel(receipt.paymentMethod)}</span></p>
+            <div className="p-3.5 border rounded-lg flex flex-col justify-between text-xs h-full bg-slate-50/40">
+              <div>
+                <p className="font-bold text-slate-800 mb-1">To / إلى</p>
+                <p className="font-semibold text-slate-900">Customer / العميل: {receipt.customer?.name || 'Walk-in Customer'}</p>
+                {receipt.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {receipt.customer.phone}</p>}
+                {receipt.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {receipt.customer.vatNumber}</p>}
+                {receipt.customer?.address && (
+                  <p className="text-slate-700 font-medium mt-1">
+                    Address: <span className="text-slate-900 font-semibold">{receipt.customer.address}</span>
+                  </p>
+                )}
+              </div>
+              <p className="text-slate-500 text-[11px] mt-2 pt-1 border-t border-slate-200/60">
+                Payment / طريقة الدفع: <span className="font-bold text-slate-800">{paymentMethodLabel(receipt.paymentMethod)}</span>
+              </p>
             </div>
           </div>
 
@@ -284,7 +296,7 @@ export default function ReceiptPage() {
             </div>
             <div className="border p-3 rounded">
               <p className="text-slate-500">Date / التاريخ</p>
-              <p className="font-semibold">{new Date(receipt.createdAt).toLocaleString()}</p>
+              <p className="font-semibold">{formatBillDate(receipt.createdAt, true)}</p>
             </div>
             <div className="border p-3 rounded">
               <p className="text-slate-500">Currency / العملة</p>

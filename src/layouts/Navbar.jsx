@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar({ onMenuToggle }) {
-  const { user } = useAuth();
+  const { user, isDeveloper } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const today = new Date().toLocaleDateString('en-SA', {
@@ -48,7 +48,14 @@ export default function Navbar({ onMenuToggle }) {
             {user?.name?.[0]?.toUpperCase() || 'A'}
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-none">{user?.name || 'Admin'}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-none">{user?.name || 'Admin'}</p>
+              {isDeveloper && (
+                <span className="text-[10px] bg-purple-600/20 text-purple-600 dark:text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded font-mono font-bold leading-none">
+                  DEV
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 capitalize">{user?.role || 'Admin'}</p>
           </div>
         </div>

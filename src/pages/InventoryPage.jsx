@@ -4,7 +4,7 @@ import { useProducts } from '../hooks/useProducts';
 import { createProduct, updateProduct, deleteProduct, getProducts } from '../services/productService';
 import { getSuppliers, createSupplier } from "../services/supplierService";
 import { getCategories, createCategory } from "../services/categoryService";
-import { MdAdd, MdSearch, MdClose, MdInventory2, MdWarning } from 'react-icons/md';
+import { MdAdd, MdSearch, MdClose, MdInventory2, MdWarning, MdLayers } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { getLowStockProducts } from '../services/productService';
 import { TableSkeleton } from '../components/SkeletonLoader';
@@ -512,6 +512,7 @@ export default function InventoryPage() {
   const [supplierFilter, setSupplierFilter] = useState('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [lowStockCount, setLowStockCount] = useState(null);
+  const [alternateUnitsOnly, setAlternateUnitsOnly] = useState(false);
   const [modal, setModal] = useState(null);
   const [page, setPage] = useState(1);
   const limit = 20;
@@ -536,7 +537,7 @@ export default function InventoryPage() {
   }, []);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [catFilter, supplierFilter, lowStockOnly]);
+  useEffect(() => { setPage(1); }, [catFilter, supplierFilter, lowStockOnly, alternateUnitsOnly]);
 
   const { data: productData, isLoading, isFetching } = useProducts({
     search: debouncedSearch,
@@ -545,6 +546,7 @@ export default function InventoryPage() {
     page,
     limit,
     ...(lowStockOnly ? { lowStock: 'true' } : {}),
+    ...(alternateUnitsOnly ? { hasUnits: 'true' } : {}),
   });
 
   const products = productData?.products || [];
@@ -573,6 +575,20 @@ export default function InventoryPage() {
           <p className="text-slate-500 text-sm">{total} products total</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Alternate Units Filter Button */}
+          <button
+            id="alternate-units-filter-btn"
+            onClick={() => setAlternateUnitsOnly(v => !v)}
+            className={`relative flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm border transition-all ${
+              alternateUnitsOnly
+                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200'
+                : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600'
+            }`}
+          >
+            <MdLayers size={16} />
+            Alternate Units
+          </button>
+
           {/* Low Stock Filter Button */}
           <button
             id="low-stock-filter-btn"
@@ -600,6 +616,22 @@ export default function InventoryPage() {
           </button>
         </div>
       </div>
+
+      {/* Alternate Units Banner */}
+      {alternateUnitsOnly && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-2xl animate-fade-in">
+          <MdLayers size={20} className="text-blue-600 shrink-0" />
+          <p className="text-sm font-semibold text-blue-700">
+            Showing products with alternate sellable units ({total} product{total !== 1 ? 's' : ''} found)
+          </p>
+          <button
+            onClick={() => setAlternateUnitsOnly(false)}
+            className="ml-auto text-xs font-black text-blue-600 hover:text-blue-800 underline underline-offset-2 transition-colors"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       {/* Low Stock Banner */}
       {lowStockOnly && (

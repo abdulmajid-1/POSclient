@@ -1,8 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getCaptcha } from '../services/authService';
 import toast from 'react-hot-toast';
-import { MdEmail, MdLock, MdVisibility, MdVisibilityOff, MdCheckCircle, MdStorefront } from 'react-icons/md';
+import {
+  MdEmail,
+  MdLock,
+  MdVisibility,
+  MdVisibilityOff,
+  MdCheckCircle,
+  MdStorefront,
+  MdSecurity,
+  MdRefresh,
+  MdWarningAmber,
+  MdLockClock,
+} from 'react-icons/md';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -11,16 +23,76 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Security & CAPTCHA states
+  const [captchaSvg, setCaptchaSvg] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaLoading, setCaptchaLoading] = useState(false);
+  const [attemptsRemaining, setAttemptsRemaining] = useState(null);
+  const [lockoutInfo, setLockoutInfo] = useState(null);
+
+  const fetchCaptcha = async () => {
+    setCaptchaLoading(true);
+    try {
+      const { data } = await getCaptcha();
+      if (data.success) {
+        setCaptchaSvg(data.captchaSvg);
+        setCaptchaToken(data.captchaToken);
+        setCaptchaAnswer('');
+      }
+    } catch {
+      toast.error('Failed to load CAPTCHA challenge');
+    } finally {
+      setCaptchaLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) return toast.error('Please enter both email and password');
+    if (!form.email || !form.password) {
+      return toast.error('Please enter both email and password');
+    }
+
+    if (lockoutInfo?.isLocked) {
+      return toast.error(`Account is locked. Please wait ${lockoutInfo.remainingMinutes}m.`);
+    }
+
+    if (!captchaAnswer.trim()) {
+      return toast.error('Please enter the security verification code');
+    }
+
     setLoading(true);
     try {
-      await login(form);
+      await login({
+        email: form.email,
+        password: form.password,
+        captchaToken,
+        captchaAnswer: captchaAnswer.trim(),
+      });
       toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      const data = err.response?.data;
+
+      if (data?.isLocked) {
+        setLockoutInfo({
+          isLocked: true,
+          remainingMinutes: data.remainingMinutes || 15,
+        });
+        setAttemptsRemaining(0);
+      } else if (data?.attemptsRemaining !== undefined) {
+        setAttemptsRemaining(data.attemptsRemaining);
+      }
+
+      if (data?.requiresCaptchaRefresh) {
+        fetchCaptcha();
+      }
+
+      toast.error(data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -145,11 +217,84 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* CAPTCHA Security Verification Field */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <MdSecurity className="text-blue-400" size={16} />
+                  <span>Security Verification / رمز التحقق</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={fetchCaptcha}
+                  disabled={captchaLoading}
+                  className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors disabled:opacity-50"
+                  title="Reload new CAPTCHA"
+                >
+                  <MdRefresh size={16} className={captchaLoading ? 'animate-spin' : ''} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                {/* SVG Visual Display */}
+                <div className="sm:col-span-5 h-[50px] bg-slate-900/90 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden p-1 select-none shadow-inner">
+                  {captchaLoading ? (
+                    <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  ) : captchaSvg ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: captchaSvg }}
+                      className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:h-full [&>svg]:rounded-lg"
+                    />
+                  ) : (
+                    <span className="text-xs text-slate-500">Loading code...</span>
+                  )}
+                </div>
+
+                {/* Input Field */}
+                <div className="sm:col-span-7">
+                  <input
+                    id="captcha-input"
+                    type="text"
+                    maxLength={6}
+                    autoComplete="off"
+                    value={captchaAnswer}
+                    onChange={(e) => setCaptchaAnswer(e.target.value.toUpperCase())}
+                    placeholder="Enter 4 characters"
+                    className="w-full px-4 py-3.5 bg-white/[0.05] border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm font-mono tracking-widest text-center uppercase"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Account Lockout Notice */}
+            {lockoutInfo?.isLocked && (
+              <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3 text-red-300 text-xs">
+                <MdLockClock size={22} className="text-red-400 shrink-0" />
+                <div>
+                  <p className="font-bold">Account Temporarily Locked</p>
+                  <p className="text-red-300/80 mt-0.5">
+                    Too many failed attempts. Please wait {lockoutInfo.remainingMinutes} minute(s) before trying again.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Remaining Attempts Warning */}
+            {!lockoutInfo?.isLocked && attemptsRemaining !== null && attemptsRemaining < 5 && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center gap-2.5 text-amber-300 text-xs">
+                <MdWarningAmber size={18} className="text-amber-400 shrink-0" />
+                <p>
+                  <span className="font-bold">Security Alert:</span> {attemptsRemaining} attempt{attemptsRemaining === 1 ? '' : 's'} remaining before a 15-minute lockout.
+                </p>
+              </div>
+            )}
+
             {/* Submit Button */}
             <button
               id="login-btn"
               type="submit"
-              disabled={loading}
+              disabled={loading || lockoutInfo?.isLocked || !captchaAnswer.trim()}
               className="w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-sm tracking-wide mt-2"
             >
               {loading ? (

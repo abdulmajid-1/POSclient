@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getSales, getSale } from '../services/saleService';
-import { MdSearch, MdVisibility, MdClose, MdHistory, MdPrint } from 'react-icons/md';
+import { NavLink } from 'react-router-dom';
+import { getSales, getSale, updateSaleCustomer } from '../services/saleService';
+import { MdSearch, MdVisibility, MdClose, MdHistory, MdPrint, MdEditLocation, MdSave, MdAnalytics, MdEdit } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import { useRef as usePrintRef } from 'react';
 import ZatcaReportButton from '../components/ZatcaReportButton';
 import ZatcaReceiptQR from '../components/ZatcaReceiptQR';
 import { TableSkeleton } from '../components/SkeletonLoader';
+import { formatBillDate } from '../utils/dateUtils';
+import EditBillModal, { isEditLocked } from '../components/EditBillModal';
+import { useAuth } from '../context/AuthContext';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -25,9 +29,20 @@ const paymentMethodLabel = (method) => {
 
 
 function SaleDetailModal({ saleId, onClose }) {
+  const { isDeveloper } = useAuth();
   const [sale, setSale] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [isSavingCustomer, setIsSavingCustomer] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [customerForm, setCustomerForm] = useState({
+    name: '',
+    phone: '',
+    vatNumber: '',
+    address: ''
+  });
 
+  const queryClient = useQueryClient();
   const invoiceRef = useRef();
 
   const handlePrint = useReactToPrint({
@@ -37,10 +52,39 @@ function SaleDetailModal({ saleId, onClose }) {
 
   useEffect(() => {
     getSale(saleId)
-      .then(({ data }) => setSale(data.sale))
+      .then(({ data }) => {
+        setSale(data.sale);
+        if (data.sale?.customer) {
+          setCustomerForm({
+            name: data.sale.customer.name || '',
+            phone: data.sale.customer.phone || '',
+            vatNumber: data.sale.customer.vatNumber || '',
+            address: data.sale.customer.address || ''
+          });
+        }
+      })
       .catch(() => toast.error('Failed to load sale'))
       .finally(() => setLoading(false));
   }, [saleId]);
+
+  const handleSaveCustomer = async (e) => {
+    e.preventDefault();
+    if (!sale?._id) return;
+    setIsSavingCustomer(true);
+    try {
+      const { data } = await updateSaleCustomer(sale._id, customerForm);
+      if (data.success && data.sale) {
+        setSale(data.sale);
+        queryClient.invalidateQueries({ queryKey: ['sales'] });
+        toast.success('Customer address & details updated!');
+        setIsEditingCustomer(false);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update customer details');
+    } finally {
+      setIsSavingCustomer(false);
+    }
+  };
 
   return (
     <div
@@ -54,6 +98,22 @@ function SaleDetailModal({ saleId, onClose }) {
           <h2 className="font-bold text-slate-800">Invoice Preview</h2>
 
           <div className="flex items-center gap-3">
+            {sale && !isEditLocked(sale) && isDeveloper && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="btn-secondary text-xs py-1.5 flex items-center gap-1.5 border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100"
+              >
+                <MdEdit size={16} /> Edit Bill / تعديل الفاتورة
+              </button>
+            )}
+            {sale && isDeveloper && (
+              <button
+                onClick={() => setIsEditingCustomer(true)}
+                className="btn-secondary text-xs py-1.5 flex items-center gap-1.5 border-primary-200 text-primary-700 bg-primary-50 hover:bg-primary-100"
+              >
+                <MdEditLocation size={16} /> Edit Address / العميل
+              </button>
+            )}
             {sale && (
               <ZatcaReportButton
                 sale={sale}
@@ -140,21 +200,42 @@ function SaleDetailModal({ saleId, onClose }) {
 
             </div>
 
-            {/* ================= FROM / TO ================= */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="p-4 border rounded-lg">
-                <p className="font-bold mb-2">From / من</p>
-                <p className="font-semibold">Ewan Al-Hazm Trading Establishment</p>
-                <p className="text-xs text-slate-400">مؤسسة ايوان الحزم التجارية</p>
-                <p className="text-xs text-slate-400">VAT / ضريبة: 314852932200003</p>
+            {/* ================= FROM / TO (STRETCHED VERTICALLY) ================= */}
+            <div className="grid grid-cols-2 gap-4 mb-6 min-h-[125px]">
+              <div className="p-3.5 border rounded-lg flex flex-col justify-between text-xs h-full bg-slate-50/40">
+                <div>
+                  <p className="font-bold text-slate-800 mb-1">From / من</p>
+                  <p className="font-semibold text-slate-900">Ewan Al-Hazm Trading Establishment</p>
+                  <p className="text-slate-500">مؤسسة ايوان الحزم التجارية</p>
+                  <p className="text-slate-500">VAT / ضريبة: 314852932200003</p>
+                </div>
               </div>
 
-              <div className="p-4 border rounded-lg">
-                <p className="font-bold mb-2">To / إلى</p>
-                <p className="font-semibold">Customer / العميل: {sale.customer?.name || 'Walk-in Customer'}</p>
-                {sale.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {sale.customer.phone}</p>}
-                {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
-                <p className="text-slate-500">Payment / طريقة الدفع: <span className="font-bold text-slate-800">{paymentMethodLabel(sale.paymentMethod)}</span></p>
+              <div className="p-3.5 border rounded-lg flex flex-col justify-between text-xs h-full bg-slate-50/40">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="font-bold text-slate-800">To / إلى</p>
+                    {isDeveloper && (
+                      <button
+                        onClick={() => setIsEditingCustomer(true)}
+                        className="no-print text-[10px] font-bold text-primary-600 hover:text-primary-800 bg-primary-50 px-2 py-0.5 rounded border border-primary-200 transition-colors"
+                      >
+                        Edit / تعديل
+                      </button>
+                    )}
+                  </div>
+                  <p className="font-semibold text-slate-900">Customer / العميل: {sale.customer?.name || 'Walk-in Customer'}</p>
+                  {sale.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {sale.customer.phone}</p>}
+                  {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
+                  {sale.customer?.address && (
+                    <p className="text-slate-700 font-medium mt-1">
+                      Address: <span className="text-slate-900 font-semibold">{sale.customer.address}</span>
+                    </p>
+                  )}
+                </div>
+                <p className="text-slate-500 text-[11px] mt-2 pt-1 border-t border-slate-200/60">
+                  Payment / طريقة الدفع: <span className="font-bold text-slate-800">{paymentMethodLabel(sale.paymentMethod)}</span>
+                </p>
               </div>
             </div>
 
@@ -166,7 +247,7 @@ function SaleDetailModal({ saleId, onClose }) {
               </div>
               <div className="border p-3 rounded">
                 <p className="text-slate-500">Date / التاريخ</p>
-                <p className="font-semibold">{new Date(sale.createdAt).toLocaleString()}</p>
+                <p className="font-semibold">{formatBillDate(sale.createdAt, true)}</p>
               </div>
               <div className="border p-3 rounded">
                 <p className="text-slate-500">Currency / العملة</p>
@@ -317,6 +398,108 @@ function SaleDetailModal({ saleId, onClose }) {
             <ZatcaReceiptQR qrCode={sale.zatca?.qrCode} />
           </div>
         ) : null}
+
+        {/* EDIT CUSTOMER & ADDRESS MODAL */}
+        {isEditingCustomer && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 no-print animate-fade-in">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between border-b pb-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <MdEditLocation className="text-primary-600" size={22} />
+                  <h3 className="font-bold text-slate-800 text-base">Edit Customer & Address</h3>
+                </div>
+                <button
+                  onClick={() => setIsEditingCustomer(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+                >
+                  <MdClose size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveCustomer} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Customer Name / اسم العميل
+                  </label>
+                  <input
+                    type="text"
+                    value={customerForm.name}
+                    onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                    placeholder="Walk-in Customer"
+                    className="input text-xs py-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Mobile / الجوال
+                    </label>
+                    <input
+                      type="text"
+                      value={customerForm.phone}
+                      onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })}
+                      placeholder="05XXXXXXXX"
+                      className="input text-xs py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      VAT Number / الرقم الضريبي
+                    </label>
+                    <input
+                      type="text"
+                      value={customerForm.vatNumber}
+                      onChange={(e) => setCustomerForm({ ...customerForm, vatNumber: e.target.value })}
+                      placeholder="3XXXXXXXXXXXXXX"
+                      className="input text-xs py-2"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Address / العنوان (Street, City, Postal Code)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={customerForm.address}
+                    onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })}
+                    placeholder="e.g. Al-Kharj Industrial Area, Street 14, Building 5"
+                    className="input text-xs py-2 resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-3 border-t">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingCustomer(false)}
+                    className="btn-secondary text-xs py-2 px-4"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingCustomer}
+                    className="btn-primary text-xs py-2 px-5 flex items-center gap-1.5"
+                  >
+                    <MdSave size={16} />
+                    {isSavingCustomer ? 'Saving...' : 'Save Details'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showEditModal && (
+          <EditBillModal
+            saleId={sale._id}
+            onClose={() => setShowEditModal(false)}
+            onSaleUpdated={(updated) => setSale(updated)}
+          />
+        )}
       </div>
     </div>
   );
@@ -359,6 +542,7 @@ function calculateDates(type, startDate, endDate) {
 }
 
 export default function SalesPage() {
+  const { isDeveloper } = useAuth();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const debounceRef = useRef(null);
@@ -367,6 +551,7 @@ export default function SalesPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState(null);
+  const [editSaleId, setEditSaleId] = useState(null);
   const [page, setPage] = useState(1);
   const limit = 20;
 
@@ -415,6 +600,16 @@ export default function SalesPage() {
           <h1 className="text-2xl font-bold text-slate-800">Sales History</h1>
           <p className="text-slate-500 text-sm">{total} total transactions</p>
         </div>
+
+        {isDeveloper && (
+          <NavLink
+            to="/sales-details"
+            className="btn-primary text-xs py-2.5 px-4 flex items-center gap-2 w-fit shadow-sm"
+          >
+            <MdAnalytics size={18} />
+            <span>Detailed Sales & Profit Analysis →</span>
+          </NavLink>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -483,12 +678,27 @@ export default function SalesPage() {
                     <td className="text-red-500">{s.discount > 0 ? `- ${formatSAR(s.discount)}` : '—'}</td>
                     <td className="font-semibold text-emerald-600">{formatSAR(s.total)}</td>
                     <td className="capitalize"><span className="badge-gray">{s.paymentMethod}</span></td>
-                    <td className="text-slate-400 text-xs">{new Date(s.createdAt).toLocaleDateString('en-SA')}</td>
+                    <td className="text-slate-400 text-xs">{formatBillDate(s.createdAt, true)}</td>
                     <td><span className={`badge-${s.status === 'completed' ? 'green' : 'red'}`}>{s.status}</span></td>
                     <td>
-                      <button onClick={() => setSelectedSaleId(s._id)} className="p-1.5 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors text-slate-400">
-                        <MdVisibility size={16} />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setSelectedSaleId(s._id)}
+                          className="p-1.5 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors text-slate-400"
+                          title="View Invoice / عرض الفاتورة"
+                        >
+                          <MdVisibility size={16} />
+                        </button>
+                        {isDeveloper && !isEditLocked(s) && (
+                          <button
+                            onClick={() => setEditSaleId(s._id)}
+                            className="p-1.5 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-colors text-slate-400"
+                            title="Edit Bill / تعديل الفاتورة"
+                          >
+                            <MdEdit size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -499,6 +709,7 @@ export default function SalesPage() {
       </div>
 
       {selectedSaleId && <SaleDetailModal saleId={selectedSaleId} onClose={() => setSelectedSaleId(null)} />}
+      {editSaleId && <EditBillModal saleId={editSaleId} onClose={() => setEditSaleId(null)} />}
 
       <div className="flex items-center justify-between p-4 border-t">
         <button

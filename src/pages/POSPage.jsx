@@ -2,13 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProducts } from '../hooks/useProducts';
 import { createSale, updateSale } from '../services/saleService';
-import { MdSearch, MdAdd, MdRemove, MdDelete, MdReceipt, MdPrint, MdClose, MdShoppingCart, MdPerson, MdPostAdd } from 'react-icons/md';
+import { MdSearch, MdAdd, MdRemove, MdDelete, MdReceipt, MdPrint, MdClose, MdShoppingCart, MdPerson, MdPostAdd, MdDescription, MdCalendarToday } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
 import CustomerSelector from '../components/CustomerSelector';
 import { CardSkeleton, InlineSpinner } from '../components/SkeletonLoader';
 import ZatcaReportButton from '../components/ZatcaReportButton';
 import ZatcaReceiptQR from '../components/ZatcaReceiptQR';
+import { formatBillDate, getTodayDateString, toInputDateValue, combineDateWithCurrentTime } from '../utils/dateUtils';
+import { useAuth } from '../context/AuthContext';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -24,6 +26,7 @@ const paymentMethodLabel = (method) => {
 
 
 function InvoiceModal({ sale: initialSale, onClose }) {
+  const { isDeveloper } = useAuth();
   const invoiceRef = useRef();
   const [sale, setSale] = useState(initialSale);
   const [items, setItems] = useState(initialSale.items);
@@ -35,12 +38,28 @@ function InvoiceModal({ sale: initialSale, onClose }) {
   const [discountType, setDiscountType] = useState(initialSale.discountType || 'fixed');
   const [taxRate, setTaxRate] = useState(initialSale.taxRate || 15);
   const [paymentMethod, setPaymentMethod] = useState(initialSale.paymentMethod || 'cash');
+  const [modalDate, setModalDate] = useState(() => toInputDateValue(initialSale?.createdAt));
   const [isSaving, setIsSaving] = useState(false);
+  const [docType, setDocType] = useState('invoice'); // 'invoice' | 'quotation'
 
   const handlePrint = useReactToPrint({
     contentRef: invoiceRef,
-    documentTitle: `Invoice-${sale.invoiceNumber}`,
+    documentTitle: `${docType === 'quotation' ? 'Quotation' : 'Invoice'}-${sale.invoiceNumber}`,
   });
+
+  const handlePrintQuotation = () => {
+    setDocType('quotation');
+    setTimeout(() => {
+      handlePrint();
+    }, 150);
+  };
+
+  const handlePrintInvoice = () => {
+    setDocType('invoice');
+    setTimeout(() => {
+      handlePrint();
+    }, 150);
+  };
 
   const handleUpdateItem = (index, field, value) => {
     const newItems = [...items];
@@ -65,7 +84,11 @@ function InvoiceModal({ sale: initialSale, onClose }) {
       discount: 0,
       discountType: 'fixed',
       totalPrice: 0,
-      productId: `custom-${Date.now()}`
+      selectedUnit: 'Unit',
+      conversionFactor: 1,
+      purchasePrice: 0,
+      productId: `custom-${Date.now()}`,
+      isCustomItem: true
     }]);
   };
 
@@ -100,7 +123,7 @@ function InvoiceModal({ sale: initialSale, onClose }) {
             purchasePrice: Number(i.purchasePrice) || 0,
             discount: Number(i.discount),
             discountType: i.discountType,
-            selectedUnit: i.selectedUnit || '',
+            selectedUnit: i.selectedUnit || 'Unit',
             conversionFactor: Number(i.conversionFactor) || 1
           };
         }),
@@ -109,7 +132,8 @@ function InvoiceModal({ sale: initialSale, onClose }) {
         discountType: discountType,
         taxRate: Number(taxRate),
         paymentMethod: paymentMethod,
-        notes: sale.notes
+        notes: sale.notes,
+        createdAt: combineDateWithCurrentTime(modalDate)
       };
 
       let data;
@@ -122,6 +146,9 @@ function InvoiceModal({ sale: initialSale, onClose }) {
       }
 
       setSale(data.sale);
+      if (data.sale?.createdAt) {
+        setModalDate(toInputDateValue(data.sale.createdAt));
+      }
       setItems(data.sale.items);
       setDiscount(
         data.sale.discountType === 'percentage'
@@ -141,6 +168,23 @@ function InvoiceModal({ sale: initialSale, onClose }) {
   return (
     <div className="modal-overlay !p-0">
       <div className="modal-box !max-w-none !w-screen !h-screen !max-h-none !rounded-none flex flex-col p-0">
+        <datalist id="invoice-unit-suggestions">
+          <option value="Unit" />
+          <option value="Pcs" />
+          <option value="Box" />
+          <option value="Carton" />
+          <option value="Meter" />
+          <option value="Kg" />
+          <option value="Roll" />
+          <option value="Packet" />
+          <option value="Set" />
+          <option value="حبة" />
+          <option value="متر" />
+          <option value="كرتون" />
+          <option value="درزن" />
+          <option value="كيس" />
+        </datalist>
+
         {/* MODAL HEADER */}
         <div className="flex items-center justify-between p-4 border-b no-print bg-white sticky top-0 z-20">
           <div className="flex items-center gap-4">
@@ -165,7 +209,10 @@ function InvoiceModal({ sale: initialSale, onClose }) {
             <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 py-2 px-6 bg-emerald-600 text-white rounded-xl text-xs font-black hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all disabled:opacity-50">
               {isSaving ? 'Saving...' : 'Finalize & Save'}
             </button>
-            <button onClick={handlePrint} className="flex items-center gap-2 py-2 px-4 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black shadow-xl transition-all">
+            <button onClick={handlePrintQuotation} className="flex items-center gap-2 py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black shadow-xl shadow-amber-100 transition-all">
+              <MdDescription size={18} /> Generate Quotation
+            </button>
+            <button onClick={handlePrintInvoice} className="flex items-center gap-2 py-2 px-4 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black shadow-xl transition-all">
               <MdPrint size={18} /> Print Now
             </button>
             <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
@@ -237,11 +284,11 @@ function InvoiceModal({ sale: initialSale, onClose }) {
                 {/* CENTER */}
                 <div className="text-center space-y-1">
                   <h1 className="text-[26px] font-bold">
-                    TAX INVOICE
+                    {docType === 'quotation' ? 'QUOTATION BILL' : 'TAX INVOICE'}
                   </h1>
 
                   <p className="text-slate-500 text-[18px]">
-                    فاتورة ضريبية
+                    {docType === 'quotation' ? 'عرض سعر' : 'فاتورة ضريبية'}
                   </p>
 
                   <p className="text-xs text-slate-500">
@@ -272,19 +319,30 @@ function InvoiceModal({ sale: initialSale, onClose }) {
 
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-3 w-[94%] mx-auto">
-              <div className="p-2.5 border rounded-lg space-y-0.5 text-[11px]">
-                <p className="font-bold text-slate-800">From / من</p>
-                <p className="font-semibold text-slate-900">Ewan Al-Hazm Trading Establishment</p>
-                <p className="text-slate-500">مؤسسة ايوان الحزم التجارية</p>
-                <p className="text-slate-500">VAT / ضريبة: 314852932200003</p>
+            <div className="grid grid-cols-2 gap-3 mb-3 w-[94%] mx-auto min-h-[125px]">
+              <div className="p-3.5 border rounded-lg flex flex-col justify-between text-[11px] h-full bg-slate-50/40">
+                <div>
+                  <p className="font-bold text-slate-800 mb-0.5">From / من</p>
+                  <p className="font-semibold text-slate-900">Ewan Al-Hazm Trading Establishment</p>
+                  <p className="text-slate-500">مؤسسة ايوان الحزم التجارية</p>
+                  <p className="text-slate-500">VAT / ضريبة: 314852932200003</p>
+                </div>
               </div>
-              <div className="p-2.5 border rounded-lg space-y-0.5 text-[11px]">
-                <p className="font-bold text-slate-800 mb-0.5">To / إلى</p>
-                <p className="font-semibold text-slate-900">Customer / العميل: {sale.customer?.name || "Walk-in Customer"}</p>
-                {sale.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {sale.customer.phone}</p>}
-                {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
-                <p className="text-slate-500">Payment / طريقة الدفع: <span className="font-bold text-slate-800">{paymentMethodLabel(paymentMethod)}</span></p>
+              <div className="p-3.5 border rounded-lg flex flex-col justify-between text-[11px] h-full bg-slate-50/40">
+                <div>
+                  <p className="font-bold text-slate-800 mb-0.5">To / إلى</p>
+                  <p className="font-semibold text-slate-900">Customer / العميل: {sale.customer?.name || "Walk-in Customer"}</p>
+                  {sale.customer?.phone && <p className="text-slate-500">Mobile / الجوال: {sale.customer.phone}</p>}
+                  {sale.customer?.vatNumber && <p className="text-slate-500">VAT / ضريبة: {sale.customer.vatNumber}</p>}
+                  {sale.customer?.address && (
+                    <p className="text-slate-700 font-medium mt-1">
+                      Address: <span className="text-slate-900 font-semibold">{sale.customer.address}</span>
+                    </p>
+                  )}
+                </div>
+                <p className="text-slate-500 text-[11px] mt-2 pt-1 border-t border-slate-200/60">
+                  Payment / طريقة الدفع: <span className="font-bold text-slate-800">{paymentMethodLabel(paymentMethod)}</span>
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2.5 mb-3.5 text-[11px] w-[94%] mx-auto">
@@ -294,7 +352,19 @@ function InvoiceModal({ sale: initialSale, onClose }) {
               </div>
               <div className="border p-2 rounded">
                 <p className="text-slate-500 text-[10px]">Date / التاريخ</p>
-                <p className="font-semibold">{new Date(sale.createdAt).toLocaleDateString()}</p>
+                {isDeveloper ? (
+                  <div className="no-print flex items-center gap-1 mt-0.5">
+                    <input
+                      type="date"
+                      value={modalDate}
+                      onChange={(e) => setModalDate(e.target.value)}
+                      className="font-bold text-xs bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded px-1.5 py-0.5 outline-none text-slate-800 cursor-pointer w-full"
+                    />
+                  </div>
+                ) : null}
+                <p className={`font-semibold ${isDeveloper ? 'hidden print:block' : 'text-xs text-slate-800 mt-0.5'}`}>
+                  {formatBillDate(combineDateWithCurrentTime(modalDate), true)}
+                </p>
               </div>
               <div className="border p-2 rounded">
                 <p className="text-slate-500 text-[10px]">Currency / العملة</p>
@@ -352,7 +422,17 @@ function InvoiceModal({ sale: initialSale, onClose }) {
 
                       {/* Unit */}
                       <td className="p-2.5 text-center">
-                        <span className="font-bold text-xs text-slate-600">
+                        <input
+                          type="text"
+                          list="invoice-unit-suggestions"
+                          value={item.selectedUnit !== undefined ? item.selectedUnit : 'Unit'}
+                          onChange={(e) =>
+                            handleUpdateItem(i, 'selectedUnit', e.target.value)
+                          }
+                          placeholder="Unit"
+                          className="w-full text-center font-bold text-slate-900 bg-white border border-slate-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-lg px-1.5 py-1 text-xs shadow-2xs no-print"
+                        />
+                        <span className="hidden print:block font-bold text-xs text-slate-600">
                           {item.selectedUnit || 'Unit'}
                         </span>
                       </td>
@@ -495,7 +575,7 @@ function InvoiceModal({ sale: initialSale, onClose }) {
               </div>
             </div>
             {/* ZATCA Phase 2 E-Invoice QR Code */}
-            <ZatcaReceiptQR qrCode={sale.zatca?.qrCode} />
+            {docType !== 'quotation' && <ZatcaReceiptQR qrCode={sale.zatca?.qrCode} />}
 
             {/* Fallback footer when not saved */}
             {!sale._id && (
@@ -513,6 +593,7 @@ function InvoiceModal({ sale: initialSale, onClose }) {
 
 
 export default function POSPage() {
+  const { isDeveloper } = useAuth();
   // Immediate search state (bound to input)
   const [search, setSearch] = useState('');
   // Debounced search state (sent to API after 300ms pause)
@@ -520,11 +601,12 @@ export default function POSPage() {
   const debounceRef = useRef(null);
 
   const [cart, setCart] = useState([]);
-  const [customer, setCustomer] = useState({ name: 'Walk-in Customer', phone: '', vatNumber: '' });
+  const [customer, setCustomer] = useState({ name: 'Walk-in Customer', phone: '', vatNumber: '', address: '' });
   const [discount, setDiscount] = useState(0);
   const [discountType, setDiscountType] = useState('fixed');
   const [taxRate, setTaxRate] = useState(15);
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [billDate, setBillDate] = useState(getTodayDateString());
   const [loading, setLoading] = useState(false);
   const [invoice, setInvoice] = useState(null);
   const [showCustomerSelector, setShowCustomerSelector] = useState(false);
@@ -604,6 +686,7 @@ export default function POSPage() {
         unitPrice: 0,
         purchasePrice: 0,
         quantity: 1,
+        selectedUnit: 'Unit',
         isCustom: true,
       },
     ]);
@@ -621,10 +704,17 @@ export default function POSPage() {
     setCart((prev) => prev.map((i) => {
       if (i.productId !== productId) return i;
 
+      if (i.isCustom || i.productId?.startsWith('custom-')) {
+        return {
+          ...i,
+          selectedUnit: unitName,
+        };
+      }
+
       let newFactor = 1;
       let newPrice = i.originalSalePrice;
 
-      if (unitName !== i.baseUnit) {
+      if (unitName !== i.baseUnit && i.units) {
         const u = i.units.find(u => u.name === unitName);
         if (u) {
           newFactor = u.unitsPerBase;
@@ -694,7 +784,7 @@ export default function POSPage() {
         paymentMethod: paymentMethod || 'cash',
         customer: customer || { name: 'Walk-in Customer' },
         invoiceNumber: `DRAFT-${Math.floor(Date.now() / 1000)}`,
-        createdAt: new Date().toISOString(),
+        createdAt: combineDateWithCurrentTime(billDate),
         subtotal: 0,
         tax: 0,
         total: 0
@@ -704,6 +794,7 @@ export default function POSPage() {
 
     setLoading(true);
     try {
+      const saleCreatedAt = isDeveloper && billDate ? combineDateWithCurrentTime(billDate) : undefined;
       const { data } = await createSale({
         items: validItems.map((i) => ({
           productId: i.productId,
@@ -721,12 +812,14 @@ export default function POSPage() {
         discountType,
         taxRate: Number(taxRate),
         paymentMethod,
+        createdAt: saleCreatedAt,
       });
       setInvoice(data.sale);
       setCart([]);
       setDiscount(0);
       setTaxRate(15);
-      setCustomer({ name: 'Walk-in Customer', phone: '', vatNumber: '' });
+      setBillDate(getTodayDateString());
+      setCustomer({ name: 'Walk-in Customer', phone: '', vatNumber: '', address: '' });
       toast.success('Sale completed!');
       // Invalidate products cache so stock counts update immediately
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -738,7 +831,8 @@ export default function POSPage() {
       _id: selectedCustomer._id,
       name: selectedCustomer.name,
       phone: selectedCustomer.phone || '',
-      vatNumber: selectedCustomer.vatNumber || ''
+      vatNumber: selectedCustomer.vatNumber || '',
+      address: selectedCustomer.address || ''
     });
   };
 
@@ -928,17 +1022,30 @@ export default function POSPage() {
                     </div>
                   )}
 
-                  {/* Micro Metadata or Custom Item Purchase Price Input */}
+                  {/* Micro Metadata or Custom Item Purchase Price & Unit Input */}
                   {item.isCustom || item.productId.startsWith('custom-') ? (
-                    <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-indigo-800">
-                      <span>Pur Price:</span>
-                      <input
-                        type="number"
-                        value={item.purchasePrice}
-                        onChange={(e) => updatePurchasePrice(item.productId, e.target.value)}
-                        className="w-12 bg-indigo-50/80 border border-indigo-300 rounded px-1 py-0.5 text-xs font-black text-indigo-900 outline-none focus:border-indigo-500 shadow-2xs"
-                        placeholder="0"
-                      />
+                    <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] font-bold text-indigo-800">
+                      <div className="flex items-center gap-1">
+                        <span>Pur:</span>
+                        <input
+                          type="number"
+                          value={item.purchasePrice}
+                          onChange={(e) => updatePurchasePrice(item.productId, e.target.value)}
+                          className="w-12 bg-indigo-50/80 border border-indigo-300 rounded px-1 py-0.5 text-xs font-black text-indigo-900 outline-none focus:border-indigo-500 shadow-2xs"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>Unit:</span>
+                        <input
+                          type="text"
+                          list="invoice-unit-suggestions"
+                          value={item.selectedUnit || ''}
+                          onChange={(e) => updateUnit(item.productId, e.target.value)}
+                          className="w-16 bg-indigo-50/80 border border-indigo-300 rounded px-1 py-0.5 text-xs font-black text-indigo-900 outline-none focus:border-indigo-500 shadow-2xs"
+                          placeholder="Unit"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-[10px] font-extrabold text-slate-700 mt-1">
@@ -1042,19 +1149,64 @@ export default function POSPage() {
               <div className="grid grid-cols-2 gap-2">
                 <input
                   value={customer.phone}
-                  onChange={(e) => setCustomer({ ...customer, _id: undefined, phone: e.target.value })}
+                  onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
                   className="input text-xs py-1.5 bg-white"
                   placeholder="Phone"
                 />
                 <input
                   value={customer.vatNumber}
-                  onChange={(e) => setCustomer({ ...customer, _id: undefined, vatNumber: e.target.value })}
+                  onChange={(e) => setCustomer({ ...customer, vatNumber: e.target.value })}
                   className="input text-xs py-1.5 bg-white"
                   placeholder="VAT Number"
                 />
               </div>
+              <input
+                value={customer.address || ''}
+                onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
+                className="input text-xs py-1.5 bg-white font-medium"
+                placeholder="Address (Optional)"
+              />
             </div>
           </div>
+
+          {/* Bill / Invoice Date Block (Developer Only) */}
+          {isDeveloper && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <MdCalendarToday size={13} className="text-primary-600" />
+                  <span>Bill Date / التاريخ</span>
+                </label>
+                {billDate !== getTodayDateString() && (
+                  <button
+                    type="button"
+                    onClick={() => setBillDate(getTodayDateString())}
+                    className="text-[10px] font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 rounded border border-amber-300 transition-colors"
+                    title="Reset to today's date"
+                  >
+                    Reset to Today
+                  </button>
+                )}
+              </div>
+
+              <input
+                type="date"
+                value={billDate}
+                onChange={(e) => setBillDate(e.target.value)}
+                className={`input text-xs py-1.5 font-bold transition-all ${
+                  billDate !== getTodayDateString()
+                    ? 'bg-amber-50/70 border-amber-300 text-amber-900 ring-1 ring-amber-300'
+                    : 'bg-white'
+                }`}
+              />
+              {billDate !== getTodayDateString() && (
+                <p className="text-[10px] font-bold text-amber-700 mt-1 flex items-center gap-1 bg-amber-50 p-1.5 rounded border border-amber-200">
+                  <span>⚠️</span>
+                  <span>Backdated: Bill will be dated {formatBillDate(billDate, false)}</span>
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Payment Method Quick Chips */}
           <div>

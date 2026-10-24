@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import DashboardLayout from './layouts/DashboardLayout';
 import LoginPage from './pages/LoginPage';
@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import InventoryPage from './pages/InventoryPage';
 import POSPage from './pages/POSPage';
 import SalesPage from './pages/SalesPage';
+import DetailedSalesPage from './pages/DetailedSalesPage';
 import ExpensesPage from './pages/ExpensesPage';
 import ReturnsPage from './pages/ReturnsPage';
 import ReportsPage from './pages/ReportsPage';
@@ -18,6 +19,13 @@ import QuickBillPage from './pages/QuickBillPage';
 import CustomerPage from './pages/CustomerPage';
 import CustomerHistoryPage from './pages/CustomerHistoryPage';
 import ReceiptPage from './pages/ReceiptPage';
+
+function DeveloperRoute({ children }) {
+  const { isDeveloper, loading } = useAuth();
+  if (loading) return null;
+  return isDeveloper ? children : <Navigate to="/dashboard" replace />;
+}
+
 
 export default function App() {
   return (
@@ -35,6 +43,7 @@ export default function App() {
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/pos" element={<POSPage />} />
               <Route path="/sales" element={<SalesPage />} />
+              <Route path="/sales-details" element={<DeveloperRoute><DetailedSalesPage /></DeveloperRoute>} />
               <Route path="/suppliers" element={<SupplierPage />} />
               <Route path="/suppliers/:id/history" element={<SupplierPurchaseHistoryPage />} />
               <Route path="/customers" element={<CustomerPage />} />

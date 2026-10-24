@@ -3,10 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import {
   MdDashboard, MdInventory, MdPointOfSale, MdHistory,
   MdMoneyOff, MdAssessment, MdSettings, MdLogout, MdKeyboardReturn, MdPerson, MdReceipt,
-  MdChevronLeft, MdChevronRight, MdMenu
+  MdChevronLeft, MdChevronRight, MdMenu, MdAnalytics
 } from 'react-icons/md';
 
-const navItems = [
+const baseNavItems = [
   { to: '/dashboard', label: 'Dashboard', icon: MdDashboard },
   { to: '/inventory', label: 'Inventory', icon: MdInventory },
   { to: '/pos', label: 'POS / Billing', icon: MdPointOfSale },
@@ -20,9 +20,14 @@ const navItems = [
   { to: '/settings', label: 'Settings', icon: MdSettings },
 ];
 
+const developerNavItems = [
+  { to: '/sales-details', label: 'Detailed Sales', icon: MdAnalytics },
+];
+
 export default function Sidebar({ isOpen, onClose, isCollapsed, onCollapseToggle }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isDeveloper } = useAuth();
   const navigate = useNavigate();
+  const navItems = isDeveloper ? [...baseNavItems, ...developerNavItems] : baseNavItems;
 
   const handleLogout = () => {
     logout();
@@ -92,7 +97,12 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onCollapseToggle
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0 animate-fade-in">
-                <p className="text-white text-sm font-medium truncate">{user?.name || 'Admin'}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-white text-sm font-medium truncate">{user?.name || 'Admin'}</p>
+                  {isDeveloper && (
+                    <span className="text-[10px] bg-purple-600/20 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded-full font-mono shrink-0">DEV</span>
+                  )}
+                </div>
                 <p className="text-slate-400 text-xs truncate">{user?.email || ''}</p>
               </div>
             )}

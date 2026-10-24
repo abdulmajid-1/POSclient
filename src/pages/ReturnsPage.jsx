@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getReturns, createReturn, reportReturnToZatca } from '../services/returnService';
 import { getSales } from '../services/saleService';
 import ZatcaReturnReportButton from '../components/ZatcaReturnReportButton';
+import { formatBillDate } from '../utils/dateUtils';
 
 import {
   MdAdd,
@@ -106,9 +107,7 @@ function ReturnReportModal({ data, onClose, onUpdated }) {
                 <span className="font-semibold">
                   Date:
                 </span>{' '}
-                {new Date(
-                  data.createdAt
-                ).toLocaleString('en-SA')}
+                {formatBillDate(data.createdAt, true)}
               </p>
 
               <p>
@@ -256,6 +255,7 @@ function ReturnModal({ onClose, onSaved }) {
     setInvoiceNum(targetSale.invoiceNumber);
     setSelectedItems(
       targetSale.items.map((item) => ({
+        saleItemId: item._id,          // sub-doc _id — unique lookup key for backend
         productId: item.product,
         productName: `${item.productName} ${item.selectedUnit ? `(${item.selectedUnit})` : ''}`,
         unitPrice: item.unitPrice,
@@ -323,7 +323,11 @@ function ReturnModal({ onClose, onSaved }) {
     try {
       const { data: resData } = await createReturn({
         saleId: sale._id,
-        items: itemsToReturn,
+        items: itemsToReturn.map((i) => ({
+          saleItemId: i.saleItemId,   // pass sub-doc _id so backend can uniquely identify each item
+          productId: i.productId,
+          quantity: i.quantity,
+        })),
         reason,
       });
 
@@ -861,11 +865,7 @@ export default function ReturnsPage() {
                     </td>
 
                     <td className="text-slate-400 text-xs">
-                      {new Date(
-                        r.createdAt
-                      ).toLocaleDateString(
-                        'en-SA'
-                      )}
+                      {formatBillDate(r.createdAt, true)}
                     </td>
 
                     <td>

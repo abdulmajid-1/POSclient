@@ -4,6 +4,7 @@ import { getSupplier, getSupplierPayments, editSupplierPayment, deleteSupplierPa
 import { getPurchases, updatePurchase, deletePurchase } from '../services/purchaseService';
 import { MdArrowBack, MdReceipt, MdPayments, MdHistory, MdShoppingBag, MdEdit, MdDelete, MdClose } from 'react-icons/md';
 import toast from 'react-hot-toast';
+import { formatBillDateOnly } from '../utils/dateUtils';
 
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
 
@@ -291,7 +292,7 @@ export default function SupplierPurchaseHistoryPage() {
                                         const remaining = (p.total || 0) - paid;
                                         return (
                                         <tr key={p._id}>
-                                            <td className="text-slate-600 font-medium">{new Date(p.date).toLocaleDateString('en-SA')}</td>
+                                            <td className="text-slate-600 font-medium">{formatBillDateOnly(p.date)}</td>
                                             <td className="font-bold text-slate-900">{p.purchaseNumber}</td>
                                             <td className="text-slate-600">
                                                 {p.items?.length > 0 ? `${p.items.length} Products` : `${p.totalItems || 0} Items`}
@@ -336,7 +337,7 @@ export default function SupplierPurchaseHistoryPage() {
                                 ) : (
                                     payments.map((p) => (
                                         <tr key={p._id}>
-                                            <td className="text-slate-600 font-medium">{new Date(p.date).toLocaleDateString('en-SA')}</td>
+                                            <td className="text-slate-600 font-medium">{formatBillDateOnly(p.date)}</td>
                                             <td className="text-slate-500 font-bold">{p.referenceNumber || '-'}</td>
                                             <td><span className="badge-blue uppercase text-[10px] font-black">{p.paymentMethod}</span></td>
                                             <td className="font-black text-emerald-600">{formatSAR(p.amount)}</td>
