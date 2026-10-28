@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getSalesReport, getExpenseReport, getProfitReport, getInventoryReport } from '../services/reportService';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, CartesianGrid,
 } from 'recharts';
-import { MdAssessment, MdPrint, MdTrendingUp, MdTrendingDown, MdVerified, MdReceipt, MdVisibility } from 'react-icons/md';
+import { MdAssessment, MdPrint, MdTrendingUp, MdTrendingDown } from 'react-icons/md';
 import toast from 'react-hot-toast';
-import { formatBillDateOnly } from '../utils/dateUtils';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 const formatSAR = (n) => `SAR ${Number(n || 0).toLocaleString('en-SA')}`;
@@ -57,12 +55,10 @@ function StatCard({ label, value, color = 'text-slate-800', sub }) {
 }
 
 export default function ReportsPage() {
-  const navigate = useNavigate();
   const [tab, setTab] = useState('sales');
   const [rangeType, setRangeType] = useState('monthly');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [zatcaOnly, setZatcaOnly] = useState(false);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [inventoryPage, setInventoryPage] = useState(1);
@@ -73,7 +69,7 @@ export default function ReportsPage() {
     setData(null);
     try {
       const { start, end } = calculateDates(rangeType, startDate, endDate);
-      const params = { startDate: start, endDate: end, zatcaOnly };
+      const params = { startDate: start, endDate: end };
       let res;
       if (tab === 'sales') res = await getSalesReport(params);
       else if (tab === 'expenses') res = await getExpenseReport(params);
@@ -85,15 +81,15 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [tab, rangeType, startDate, endDate, zatcaOnly]);
+  }, [tab, rangeType, startDate, endDate]);
 
-  /* Re-fetch whenever tab, range, or zatcaOnly changes */
+  /* Re-fetch whenever tab or range changes (not on every custom date keystroke) */
   useEffect(() => {
     if (rangeType !== 'custom') {
       fetchReport();
     }
     if (tab === 'inventory') setInventoryPage(1);
-  }, [tab, rangeType, zatcaOnly]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tab, rangeType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tabs = [
     { key: 'sales', label: '📊 Sales Report' },
@@ -145,68 +141,23 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      {/* ── Range Selector & Filters ── */}
+      {/* ── Range Selector ── */}
       {tab !== 'inventory' && (
         <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex gap-2 flex-wrap bg-slate-100 p-1 rounded-2xl w-fit">
-              {ranges.map((r) => (
-                <button
-                  key={r.key}
-                  onClick={() => setRangeType(r.key)}
-                  className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${rangeType === r.key
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-
-            {/* ZATCA Filter Toggle for Sales and Profit */}
-            {(tab === 'sales' || tab === 'profit') && (
-              <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl w-fit">
-                <button
-                  onClick={() => setZatcaOnly(false)}
-                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${
-                    !zatcaOnly
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  All Sales
-                </button>
-                <button
-                  onClick={() => setZatcaOnly(true)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${
-                    zatcaOnly
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  <MdVerified size={15} className={zatcaOnly ? 'text-white' : 'text-emerald-500'} />
-                  ZATCA Reported Only
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Active ZATCA Filter Banner */}
-          {zatcaOnly && (tab === 'sales' || tab === 'profit') && (
-            <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl text-emerald-900 text-xs font-medium animate-slide-down">
-              <span className="flex items-center gap-2">
-                <MdVerified size={16} className="text-emerald-600" />
-                Filtered by: <strong className="font-black">ZATCA Phase 2 Reported &amp; Cleared Sales Only</strong>
-              </span>
+          <div className="flex gap-2 flex-wrap bg-slate-100 p-1 rounded-2xl w-fit">
+            {ranges.map((r) => (
               <button
-                onClick={() => setZatcaOnly(false)}
-                className="text-emerald-700 hover:text-emerald-900 font-bold underline text-xs"
+                key={r.key}
+                onClick={() => setRangeType(r.key)}
+                className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${rangeType === r.key
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                  }`}
               >
-                Show All Sales
+                {r.label}
               </button>
-            </div>
-          )}
+            ))}
+          </div>
 
           {rangeType === 'custom' && (
             <div className="card p-4 flex flex-col sm:flex-row gap-3 items-end">
@@ -235,33 +186,11 @@ export default function ReportsPage() {
           {tab === 'sales' && (
             <div className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                <StatCard
-                  label={zatcaOnly ? "ZATCA Sales Count" : "Total Sales"}
-                  value={data.data?.count || 0}
-                  sub={!zatcaOnly && data.data?.zatcaCount ? `ZATCA: ${data.data.zatcaCount} invoices` : (zatcaOnly ? 'Reported to ZATCA' : undefined)}
-                />
-                <StatCard
-                  label={zatcaOnly ? "ZATCA Revenue" : "Revenue"}
-                  value={formatSAR(data.data?.revenue)}
-                  color="text-emerald-600"
-                  sub={!zatcaOnly && data.data?.zatcaRevenue ? `ZATCA: ${formatSAR(data.data.zatcaRevenue)}` : (zatcaOnly ? 'Reported sales value' : undefined)}
-                />
-                <StatCard
-                  label={zatcaOnly ? "ZATCA Gross Profit" : "Gross Profit"}
-                  value={formatSAR(data.data?.totalProfit)}
-                  color="text-blue-600"
-                />
-                <StatCard
-                  label={zatcaOnly ? "ZATCA Discount" : "Discount Given"}
-                  value={formatSAR(data.data?.discount)}
-                  color="text-amber-600"
-                />
-                <StatCard
-                  label={zatcaOnly ? "ZATCA Tax (VAT)" : "Tax Collected"}
-                  value={formatSAR(data.data?.tax)}
-                  color="text-purple-600"
-                  sub={!zatcaOnly && data.data?.zatcaTax ? `ZATCA VAT: ${formatSAR(data.data.zatcaTax)}` : (zatcaOnly ? '15% reported VAT' : undefined)}
-                />
+                <StatCard label="Total Sales" value={data.data?.count || 0} />
+                <StatCard label="Revenue" value={formatSAR(data.data?.revenue)} color="text-emerald-600" />
+                <StatCard label="Gross Profit" value={formatSAR(data.data?.totalProfit)} color="text-blue-600" />
+                <StatCard label="Discount Given" value={formatSAR(data.data?.discount)} color="text-amber-600" />
+                <StatCard label="Tax Collected" value={formatSAR(data.data?.tax)} color="text-purple-600" />
               </div>
 
               {/* ── Per-day Revenue & Profit Chart ── */}
@@ -269,7 +198,6 @@ export default function ReportsPage() {
                 <div className="card">
                   <h3 className="font-bold text-slate-800 mb-4">
                     Daily Revenue &amp; Profit — <span className="text-primary-600">{rangeLabel}</span>
-                    {zatcaOnly && <span className="text-emerald-600 text-xs ml-2 font-bold">(ZATCA Only)</span>}
                   </h3>
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={data.byDay} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
@@ -287,102 +215,7 @@ export default function ReportsPage() {
               {data.byDay?.length === 0 && (
                 <div className="card flex flex-col items-center py-16 text-slate-400">
                   <MdTrendingUp size={48} className="opacity-20 mb-3" />
-                  <p className="font-semibold">
-                    {zatcaOnly ? 'No ZATCA reported sales for this period' : 'No sales data for this period'}
-                  </p>
-                </div>
-              )}
-
-              {/* ── Sales / ZATCA Reported Table ── */}
-              {data.sales?.length > 0 && (
-                <div className="card p-0 overflow-hidden shadow-md">
-                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                      <MdReceipt size={18} className="text-primary-600" />
-                      {zatcaOnly ? 'ZATCA Reported Invoices' : 'Sales Invoices'} ({data.sales.length})
-                    </h3>
-                    <span className="text-xs text-slate-400 font-medium">
-                      {zatcaOnly ? 'Showing verified ZATCA invoices' : 'Recent sales in selected period'}
-                    </span>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="table">
-                      <thead className="bg-slate-50">
-                        <tr>
-                          <th>Date</th>
-                          <th>Invoice #</th>
-                          <th>Customer</th>
-                          <th>Type</th>
-                          <th>Payment</th>
-                          <th>Amount</th>
-                          <th>Tax (VAT)</th>
-                          <th>ZATCA Status</th>
-                          <th className="text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.sales.map((s) => {
-                          const isReported = ['REPORTED', 'CLEARED', 'reported', 'cleared'].includes(s.zatca?.reportingStatus);
-                          return (
-                            <tr key={s._id}>
-                              <td className="text-slate-600 font-medium whitespace-nowrap">
-                                {formatBillDateOnly(s.createdAt)}
-                              </td>
-                              <td className="font-bold text-slate-900">
-                                <button
-                                  onClick={() => navigate(`/receipt/${s._id}`)}
-                                  className="hover:text-primary-600 transition-colors font-mono font-bold"
-                                >
-                                  {s.invoiceNumber}
-                                </button>
-                              </td>
-                              <td className="text-slate-700 font-medium">
-                                {s.customer?.name || 'Walk-in Customer'}
-                              </td>
-                              <td>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                                  s.zatca?.invoiceType === 'B2B'
-                                    ? 'bg-purple-100 text-purple-700'
-                                    : 'bg-blue-100 text-blue-700'
-                                }`}>
-                                  {s.zatca?.invoiceType || 'B2C'}
-                                </span>
-                              </td>
-                              <td className="text-slate-500 uppercase text-xs font-semibold">
-                                {s.paymentMethod || 'cash'}
-                              </td>
-                              <td className="font-black text-slate-900">
-                                {formatSAR(s.total)}
-                              </td>
-                              <td className="font-bold text-violet-700">
-                                {formatSAR(s.tax)}
-                              </td>
-                              <td>
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
-                                  isReported
-                                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                                    : 'bg-slate-100 text-slate-500'
-                                }`}>
-                                  {isReported && <MdVerified size={12} />}
-                                  {s.zatca?.reportingStatus || 'NOT_REPORTED'}
-                                </span>
-                              </td>
-                              <td className="text-right">
-                                <button
-                                  onClick={() => navigate(`/receipt/${s._id}`)}
-                                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-primary-600 transition-colors inline-flex items-center gap-1 text-xs font-bold"
-                                  title="View Receipt"
-                                >
-                                  <MdVisibility size={16} />
-                                  <span>View</span>
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <p className="font-semibold">No sales data for this period</p>
                 </div>
               )}
             </div>
@@ -447,25 +280,12 @@ export default function ReportsPage() {
           {tab === 'profit' && (
             <div className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                <StatCard
-                  label={zatcaOnly ? "ZATCA Revenue" : "Revenue"}
-                  value={formatSAR(data.data?.revenue)}
-                  color="text-emerald-600"
-                  sub={zatcaOnly ? "Reported sales only" : undefined}
-                />
+                <StatCard label="Revenue" value={formatSAR(data.data?.revenue)} color="text-emerald-600" />
                 <StatCard label="Expenses" value={formatSAR(data.data?.expenses)} color="text-red-500" />
+                <StatCard label="Returns" value={formatSAR(data.data?.returns)} color="text-amber-500" />
+                <StatCard label="Gross Profit" value={formatSAR(data.data?.grossProfit)} color="text-blue-600" />
                 <StatCard
-                  label={zatcaOnly ? "ZATCA Returns" : "Returns"}
-                  value={formatSAR(data.data?.returns)}
-                  color="text-amber-500"
-                />
-                <StatCard
-                  label={zatcaOnly ? "ZATCA Gross Profit" : "Gross Profit"}
-                  value={formatSAR(data.data?.grossProfit)}
-                  color="text-blue-600"
-                />
-                <StatCard
-                  label={zatcaOnly ? "ZATCA Net Profit" : "Net Profit"}
+                  label="Net Profit"
                   value={formatSAR(data.data?.netProfit)}
                   color={data.data?.netProfit >= 0 ? 'text-teal-600' : 'text-red-600'}
                 />
@@ -474,7 +294,6 @@ export default function ReportsPage() {
               <div className="card">
                 <h3 className="font-bold text-slate-800 mb-4">
                   Profit Breakdown — <span className="text-primary-600">{rangeLabel}</span>
-                  {zatcaOnly && <span className="text-emerald-600 text-xs ml-2 font-bold">(ZATCA Only)</span>}
                 </h3>
                 <ResponsiveContainer width="100%" height={260}>
                   <BarChart

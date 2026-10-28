@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     getCustomers,
     createCustomer,
@@ -125,25 +125,20 @@ export default function CustomerPage() {
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState(null); // { type: 'add'|'edit', data: customer }
     const navigate = useNavigate();
-    const lastSearchRef = useRef(null);
 
     const fetchCustomers = useCallback(async () => {
-        const clean = search.trim().replace(/\s+/g, ' ');
-        if (clean === lastSearchRef.current && customers.length > 0) return;
-        lastSearchRef.current = clean;
-
         try {
-            const res = await getCustomers({ search: clean });
+            const res = await getCustomers({ search });
             setCustomers(res.data.data);
         } catch {
             toast.error('Failed to load customers');
         } finally {
             setLoading(false);
         }
-    }, [search, customers.length]);
+    }, [search]);
 
     useEffect(() => {
-        const timer = setTimeout(fetchCustomers, 250);
+        const timer = setTimeout(fetchCustomers, 300);
         return () => clearTimeout(timer);
     }, [fetchCustomers]);
 

@@ -1193,10 +1193,11 @@ export default function POSPage() {
                 type="date"
                 value={billDate}
                 onChange={(e) => setBillDate(e.target.value)}
-                className={`input text-xs py-1.5 font-bold transition-all ${billDate !== getTodayDateString()
+                className={`input text-xs py-1.5 font-bold transition-all ${
+                  billDate !== getTodayDateString()
                     ? 'bg-amber-50/70 border-amber-300 text-amber-900 ring-1 ring-amber-300'
                     : 'bg-white'
-                  }`}
+                }`}
               />
               {billDate !== getTodayDateString() && (
                 <p className="text-[10px] font-bold text-amber-700 mt-1 flex items-center gap-1 bg-amber-50 p-1.5 rounded border border-amber-200">

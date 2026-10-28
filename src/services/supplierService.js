@@ -24,8 +24,8 @@ export const deleteSupplier = (id) =>
 export const updateSupplierPayment = (id, data) =>
     api.patch(`/suppliers/${id}/payment`, data);
 
-export const getSupplierPayments = (id, params) =>
-    api.get(`/suppliers/${id}/payments`, { params });
+export const getSupplierPayments = (id) =>
+    api.get(`/suppliers/${id}/payments`);
 
 export const addSupplierPurchase = (id, data) =>
     api.patch(`/suppliers/${id}/purchase`, data);

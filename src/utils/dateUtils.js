@@ -83,34 +83,3 @@ export const combineDateWithCurrentTime = (dateStr) => {
   return isNaN(combined.getTime()) ? now.toISOString() : combined.toISOString();
 };
 
-/**
- * Calculates start and end ISO strings based on a range type
- * Types: 'today' | 'month' | 'yearly' | 'custom' | 'all'
- */
-export const calculateDates = (type, startDate, endDate) => {
-  const now = new Date();
-  let start = new Date();
-  let end = new Date();
-
-  if (type === 'today' || type === 'daily') {
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-  } else if (type === 'month' || type === 'monthly') {
-    start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-  } else if (type === 'yearly' || type === 'year') {
-    start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-    end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
-  } else if (type === 'custom') {
-    if (!startDate || !endDate) return null;
-    const s = new Date(startDate + 'T00:00:00');
-    const e = new Date(endDate + 'T23:59:59.999');
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) return null;
-    return { start: s.toISOString(), end: e.toISOString() };
-  } else if (type === 'all') {
-    return null;
-  }
-
-  return { start: start.toISOString(), end: end.toISOString() };
-};
-
