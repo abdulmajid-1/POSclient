@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://posserver-production-4b29.up.railway.app/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://abtraders-env.eba-qhwrphci.ap-southeast-2.elasticbeanstalk.com/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
