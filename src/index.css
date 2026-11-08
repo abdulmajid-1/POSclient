@@ -5,59 +5,137 @@
 @tailwind utilities;
 
 @layer base {
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-family: 'Inter', system-ui, sans-serif; }
-  body { @apply bg-slate-50 text-slate-800 antialiased transition-colors duration-200; }
-  html.dark body { @apply bg-[#090D16] text-slate-100; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased transition-colors duration-200;
+  }
+
+  html.dark body {
+    @apply bg-[#090D16] text-slate-100;
+  }
 }
 
 @layer components {
   .btn-primary {
     @apply inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium text-sm hover:bg-primary-700 active:bg-primary-800 transition-all duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed;
   }
+
   .btn-secondary {
     @apply inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-lg font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 shadow-sm disabled:opacity-50;
   }
+
   .btn-danger {
     @apply inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg font-medium text-sm hover:bg-red-600 transition-all duration-200 shadow-sm disabled:opacity-50;
   }
+
   .btn-success {
     @apply inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg font-medium text-sm hover:bg-emerald-600 transition-all duration-200 shadow-sm disabled:opacity-50;
   }
+
   .card {
     @apply bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 p-6 transition-colors duration-200 text-slate-800 dark:text-slate-100;
   }
+
   .input {
     @apply w-full px-3 py-2 border border-slate-200 dark:border-slate-700/80 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-slate-900;
   }
+
   .label {
     @apply block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1;
   }
-  .badge-green { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300; }
-  .badge-red { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300; }
-  .badge-yellow { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300; }
-  .badge-blue { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300; }
-  .badge-gray { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300; }
-  .table-wrapper { @apply overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800; }
-  .table { @apply w-full text-sm text-left; }
-  .table th { @apply px-4 py-3 bg-slate-50 dark:bg-slate-900/90 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wider border-b border-slate-100 dark:border-slate-800; }
-  .table td { @apply px-4 py-3 text-slate-700 dark:text-slate-200 border-b border-slate-50 dark:border-slate-800/50; }
-  .table tr:hover td { @apply bg-slate-50/50 dark:bg-slate-800/40; }
-  .table tr:last-child td { @apply border-b-0; }
-  .stat-card { @apply card flex items-center gap-4 hover:shadow-md transition-shadow duration-200; }
-  .modal-overlay { @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in; }
-  .modal-box { @apply bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-slate-800 animate-slide-in; }
+
+  .badge-green {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300;
+  }
+
+  .badge-red {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300;
+  }
+
+  .badge-yellow {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300;
+  }
+
+  .badge-blue {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300;
+  }
+
+  .badge-gray {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300;
+  }
+
+  .table-wrapper {
+    @apply overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800;
+  }
+
+  .table {
+    @apply w-full text-sm text-left;
+  }
+
+  .table th {
+    @apply px-4 py-3 bg-slate-50 dark:bg-slate-900/90 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wider border-b border-slate-100 dark:border-slate-800;
+  }
+
+  .table td {
+    @apply px-4 py-3 text-slate-700 dark:text-slate-200 border-b border-slate-50 dark:border-slate-800/50;
+  }
+
+  .table tr:hover td {
+    @apply bg-slate-50/50 dark:bg-slate-800/40;
+  }
+
+  .table tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .stat-card {
+    @apply card flex items-center gap-4 hover:shadow-md transition-shadow duration-200;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in;
+  }
+
+  .modal-box {
+    @apply bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-100 dark:border-slate-800 animate-slide-in;
+  }
+
   .sidebar-link {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-200 text-sm font-medium;
   }
-  .sidebar-link.active { @apply bg-primary-600 text-white shadow-lg; }
+
+  .sidebar-link.active {
+    @apply bg-primary-600 text-white shadow-lg;
+  }
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
 
 /* Global Dark Mode Styling */
 html.dark {
@@ -69,9 +147,17 @@ html.dark body {
   color: #f1f5f9 !important;
 }
 
-html.dark ::-webkit-scrollbar-track { background: #0f172a; }
-html.dark ::-webkit-scrollbar-thumb { background: #334155; }
-html.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+html.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
 
 /* Dark mode text readability */
 html.dark h1,
@@ -102,14 +188,19 @@ html.dark label {
     margin: 8mm 10mm 10mm 10mm;
   }
 
-  body, html {
+  body,
+  html {
     background: #ffffff !important;
     color: #000000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  .no-print, nav, aside, header, #checkout-btn {
+  .no-print,
+  nav,
+  aside,
+  header,
+  #checkout-btn {
     display: none !important;
   }
 
@@ -126,7 +217,11 @@ html.dark label {
     border: none !important;
   }
 
-  .avoid-break-inside, table, .border, img, [alt*="ZATCA"] {
+  .avoid-break-inside,
+  table,
+  .border,
+  img,
+  [alt*="ZATCA"] {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }

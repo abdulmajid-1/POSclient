@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { NavLink } from 'react-router-dom';
@@ -7,7 +5,6 @@ import { getSales, getSale, updateSaleCustomer } from '../services/saleService';
 import { MdSearch, MdVisibility, MdClose, MdHistory, MdPrint, MdEditLocation, MdSave, MdAnalytics, MdEdit } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { useReactToPrint } from 'react-to-print';
-import { useRef as usePrintRef } from 'react';
 import ZatcaReportButton from '../components/ZatcaReportButton';
 import ZatcaReceiptQR from '../components/ZatcaReceiptQR';
 import { TableSkeleton } from '../components/SkeletonLoader';
@@ -558,12 +555,14 @@ export default function SalesPage() {
   // 300ms debounce — reset page on new search
   useEffect(() => {
     clearTimeout(debounceRef.current);
+    const clean = search.trim();
+    if (clean === debouncedSearch) return;
     debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(search.trim());
+      setDebouncedSearch(clean);
       setPage(1);
     }, 300);
     return () => clearTimeout(debounceRef.current);
-  }, [search]);
+  }, [search, debouncedSearch]);
 
   // Reset page when range or dates change
   useEffect(() => { setPage(1); }, [rangeType, startDate, endDate]);
@@ -573,12 +572,22 @@ export default function SalesPage() {
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['sales', debouncedSearch, rangeType, startDate, endDate, page],
-    queryFn: () =>
-      getSales({ search: debouncedSearch, startDate: dates.start, endDate: dates.end, page, limit })
-        .then((r) => r.data),
+    queryFn: () => {
+      const params = {
+        search: debouncedSearch,
+        page,
+        limit,
+      };
+      // When searching, do NOT restrict by date so it searches the whole history across all dates!
+      if (!debouncedSearch && dates) {
+        params.startDate = dates.start;
+        params.endDate = dates.end;
+      }
+      return getSales(params).then((r) => r.data);
+    },
     staleTime: 30_000,
     placeholderData: (prev) => prev,
-    enabled: !customIncomplete,
+    enabled: debouncedSearch ? true : !customIncomplete,
   });
 
   const sales = data?.sales || [];
@@ -598,7 +607,9 @@ export default function SalesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Sales History</h1>
-          <p className="text-slate-500 text-sm">{total} total transactions</p>
+          <p className="text-slate-500 text-sm">
+            {total} {debouncedSearch ? 'matching transactions (All-Time)' : 'total transactions'}
+          </p>
         </div>
 
         {isDeveloper && (
@@ -620,22 +631,39 @@ export default function SalesPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by invoice or customer..."
+              placeholder="Search by invoice, customer name or phone (searches all history)..."
               className="input pl-9 pr-9"
             />
-            {isFetching && !isLoading && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              {isFetching && !isLoading && (
                 <div className="w-4 h-4 border-2 border-slate-300 border-t-primary-600 rounded-full animate-spin" />
-              </div>
-            )}
+              )}
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200 transition-colors"
+                  title="Clear search"
+                >
+                  <MdClose size={16} />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit">
             {ranges.map((r) => (
               <button
                 key={r.key}
-                onClick={() => setRangeType(r.key)}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${rangeType === r.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                onClick={() => {
+                  setRangeType(r.key);
+                  if (search) setSearch('');
+                }}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
+                  rangeType === r.key && !debouncedSearch
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
               >
                 {r.label}
               </button>
@@ -643,7 +671,25 @@ export default function SalesPage() {
           </div>
         </div>
 
-        {rangeType === 'custom' && (
+        {/* Searching All History Notice */}
+        {debouncedSearch && (
+          <div className="flex items-center justify-between text-xs bg-primary-50 text-primary-700 px-3.5 py-2 rounded-xl border border-primary-200/60 animate-fade-in shadow-2xs">
+            <span className="font-semibold flex items-center gap-2">
+              <span className="text-base">🔍</span>
+              <span>
+                Searching whole sales history across all dates for: <strong className="text-slate-900 underline font-black">"{debouncedSearch}"</strong>
+              </span>
+            </span>
+            <button
+              onClick={() => setSearch('')}
+              className="text-primary-700 hover:text-primary-900 font-black text-xs hover:underline flex items-center gap-1"
+            >
+              <span>✕ Clear Search</span>
+            </button>
+          </div>
+        )}
+
+        {rangeType === 'custom' && !debouncedSearch && (
           <div className="card p-4 flex flex-col sm:flex-row gap-3 items-end animate-slide-down">
             <div className="flex-1"><label className="label text-[10px] font-black uppercase text-slate-400">From Date</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input" /></div>
             <div className="flex-1"><label className="label text-[10px] font-black uppercase text-slate-400">To Date</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="input" /></div>
@@ -653,7 +699,7 @@ export default function SalesPage() {
       </div>
 
       <div className="card p-0">
-        {customIncomplete ? (
+        {customIncomplete && !debouncedSearch ? (
           <div className="flex flex-col items-center py-16 text-slate-400">
             <MdHistory size={48} className="opacity-30 mb-3" />
             <p className="font-medium">Select both From and To dates, then click Apply</p>
